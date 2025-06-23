@@ -1,0 +1,118 @@
+/* Loading Overlay */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-progress {
+    width: 200px;
+    margin-bottom: 1rem;
+}
+
+.loading-text {
+    color: var(--lumo-primary-color);
+    font-size: 1.2rem;
+}
+
+/* Animations */
+.animate__animated {
+    animation-duration: 0.5s;
+    animation-fill-mode: both;
+}
+
+.animate__faster {
+    animation-duration: 0.3s;
+}
+
+.animate__fadeIn {
+    animation-name: fadeIn;
+}
+
+.animate__pulse {
+    animation-name: pulse;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Feedback utilisateur */
+.notification-success {
+    background-color: var(--lumo-success-color);
+    color: white;
+}
+
+.notification-error {
+    background-color: var(--lumo-error-color);
+    color: white;
+}
+
+.notification-warning {
+    background-color: var(--lumo-warning-color);
+    color: white;
+}
+
+/* Transitions */
+.fade-enter {
+    opacity: 0;
+}
+
+.fade-enter-active {
+    opacity: 1;
+    transition: opacity 0.3s ease-in;
+}
+
+.fade-exit {
+    opacity: 1;
+}
+
+.fade-exit-active {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.footer-sticky {
+    margin-top: auto;
+    width: 100%;
+}
+
+/* Pour un fond général clair */
+body {
+    background: #f5f6fa;
+}
+
+/* Pour les bulles de commentaires */
+.comment-bubble {
+    background: #f7f7fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 0.5em;
+    padding: 1em;
+} 
