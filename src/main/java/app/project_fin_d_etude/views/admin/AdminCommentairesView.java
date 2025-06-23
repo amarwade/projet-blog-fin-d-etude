@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
@@ -127,6 +129,25 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
             }
             return "Article inconnu";
         }).setHeader("Article");
+
+        grid.addColumn(Commentaire::isInapproprie)
+                .setHeader("Inapproprié")
+                .setAutoWidth(true);
+
+        grid.addComponentColumn(commentaire -> {
+            Button inapproprieBtn = new Button(
+                    commentaire.isInapproprie() ? "Rendre approprié" : "Marquer inapproprié"
+            );
+            inapproprieBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
+
+            inapproprieBtn.addClickListener(e -> {
+                commentaire.setInapproprie(!commentaire.isInapproprie());
+                commentairePresenter.modifier(commentaire); // ou un service direct si tu préfères
+                grid.getDataProvider().refreshItem(commentaire);
+            });
+
+            return inapproprieBtn;
+        }).setHeader("Modération");
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
     }

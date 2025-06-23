@@ -28,12 +28,12 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
+import app.project_fin_d_etude.model.Utilisateur;
 import app.project_fin_d_etude.presenter.CommentairePresenter;
 import app.project_fin_d_etude.presenter.PostPresenter;
+import app.project_fin_d_etude.service.UtilisateurService;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
-import app.project_fin_d_etude.service.UtilisateurService;
-import app.project_fin_d_etude.model.Utilisateur;
 
 /**
  * Vue de détail d'un article : affiche le contenu de l'article et ses
@@ -295,17 +295,37 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 .set("margin-bottom", "0.5em")
                 .set("padding", "1em");
 
-        // Auteur et date en gras, sur une ligne
+        // Auteur et date
         String auteur = commentaire.getAuteur() != null ? commentaire.getAuteur().getNom() : "Auteur inconnu";
         String date = commentaire.getDateCreation() != null ? commentaire.getDateCreation().format(dateFormatter) : "";
         Span auteurDate = new Span(auteur + " • " + date);
         auteurDate.getStyle().set("font-weight", "bold").set("font-size", "0.95em").set("display", "block").set("margin-bottom", "0.3em");
 
-        // Contenu du commentaire, en dessous
+        // Label inapproprié si besoin
+        Span inapproprieLabel = null;
+        if (commentaire.isInapproprie()) {
+            inapproprieLabel = new Span("Inapproprié");
+            inapproprieLabel.getStyle()
+                    .set("color", "white")
+                    .set("background", "#d32f2f")
+                    .set("padding", "0.2em 0.7em")
+                    .set("border-radius", "8px")
+                    .set("font-size", "0.85em")
+                    .set("margin-left", "1em");
+        }
+
+        // Contenu du commentaire
         Span contenu = new Span(commentaire.getContenu() != null ? commentaire.getContenu() : "");
         contenu.getStyle().set("display", "block");
 
-        bubble.add(auteurDate, contenu);
+        // Ajout dans la bulle
+        HorizontalLayout header = new HorizontalLayout(auteurDate);
+        if (inapproprieLabel != null) {
+            header.add(inapproprieLabel);
+        }
+        header.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        bubble.add(header, contenu);
         return bubble;
     }
 
