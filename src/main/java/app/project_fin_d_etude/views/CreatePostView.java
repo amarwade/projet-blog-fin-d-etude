@@ -142,7 +142,6 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         post.setAuteur(auteur);
 
         postPresenter.publierPost(post);
-        redirigerVersDetail(post.getId());
     }
 
     /**
