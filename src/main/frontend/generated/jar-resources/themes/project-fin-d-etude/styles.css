@@ -72,7 +72,7 @@ vaadin-side-nav.admin-sidenav vaadin-side-nav-item {
     background: #111 !important;
 }
 vaadin-side-nav.admin-sidenav vaadin-side-nav-item:hover {
-    background: #874343 !important;
+    background: #742feb !important;
     color: #fff !important;
 }
 vaadin-side-nav.admin-sidenav vaadin-icon,
@@ -107,45 +107,4 @@ vaadin-side-nav.admin-sidenav [part="icon"] {
     border: 1px solid #fff !important;
 }
 
-/* Désactive le scroll du menu latéral si jamais il reste */
-[part="drawer"] {
-    overflow: hidden !important;
-}
-
-.theme-btn {
-    background: #fff;
-    color: #111;
-    border: 1px solid #111;
-    border-radius: 6px;
-    font-weight: bold;
-    margin-right: 8px;
-    transition: background 0.2s, color 0.2s;
-}
-.theme-btn:hover {
-    background: #111;
-    color: #fff;
-    border: 1px solid #fff;
-}
-
-body.dark-theme .theme-btn {
-    background: #fff;
-    color: #111;
-    border: 1px solid #fff;
-}
-body.dark-theme .theme-btn:hover {
-    background: #222;
-    color: #fff;
-    border: 1px solid #fff;
-}
-
-body.light-theme .theme-btn {
-    background: #111;
-    color: #fff;
-    border: 1px solid #111;
-}
-body.light-theme .theme-btn:hover {
-    background: #fff;
-    color: #111;
-    border: 1px solid #111;
-}
 

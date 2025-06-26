@@ -5,6 +5,7 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.icon.VaadinIcon;
 
 import app.project_fin_d_etude.utils.Routes;
 import org.springframework.security.core.Authentication;
@@ -78,52 +79,36 @@ public class Header extends HorizontalLayout {
         createNavLink(navLinks, Routes.ABOUT, "A propos");
         createNavLink(navLinks, Routes.CONTACT, "Contact");
 
-        HorizontalLayout buttonsContainer = new HorizontalLayout();
+        Button actionButton;
+        if (isAuthenticated) {
+            actionButton = new Button("Déconnexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
+            actionButton.addClassNames(
+                    LumoUtility.Background.PRIMARY,
+                    LumoUtility.TextColor.PRIMARY_CONTRAST,
+                    LumoUtility.Padding.Horizontal.MEDIUM,
+                    LumoUtility.Padding.Vertical.SMALL,
+                    LumoUtility.BorderRadius.SMALL
+            );
+            actionButton.getStyle().set("cursor", "pointer");
+            actionButton.getElement().setAttribute("title", "Se déconnecter de votre compte");
+            actionButton.getElement().setAttribute("aria-label", "Se déconnecter de votre compte");
+        } else {
+            actionButton = new Button("Connexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak")));
+            actionButton.addClassNames(
+                    LumoUtility.Background.PRIMARY,
+                    LumoUtility.TextColor.PRIMARY_CONTRAST,
+                    LumoUtility.Padding.Horizontal.MEDIUM,
+                    LumoUtility.Padding.Vertical.SMALL,
+                    LumoUtility.BorderRadius.SMALL
+            );
+            actionButton.getStyle().set("cursor", "pointer");
+            actionButton.getElement().setAttribute("title", "Se connecter à votre compte");
+            actionButton.getElement().setAttribute("aria-label", "Se connecter à votre compte");
+        }
+
+        HorizontalLayout buttonsContainer = new HorizontalLayout(actionButton);
         buttonsContainer.setSpacing(true);
         buttonsContainer.setAlignItems(Alignment.CENTER);
-
-        // Bouton Thème
-        Button themeButton = new Button("Thème", event -> {
-            getUI().ifPresent(ui -> ui.getPage().executeJs(
-                    "document.body.classList.toggle('dark-theme'); document.body.classList.toggle('light-theme');"
-            ));
-        });
-        themeButton.addClassName("theme-btn");
-        themeButton.setIcon(VaadinIcon.MOON_O.create());
-
-        HorizontalLayout userMenu = new HorizontalLayout(themeButton, logoutButton);
-        userMenu.setWidthFull();
-        userMenu.setJustifyContentMode(HorizontalLayout.JustifyContentMode.CENTER);
-        userMenu.setAlignItems(HorizontalLayout.Alignment.CENTER);
-        userMenu.getStyle().set("margin-top", "32px");
-
-        if (isAuthenticated) {
-            Button logoutButton = new Button("Déconnexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
-            logoutButton.addClassNames(
-                    LumoUtility.Background.PRIMARY,
-                    LumoUtility.TextColor.PRIMARY_CONTRAST,
-                    LumoUtility.Padding.Horizontal.MEDIUM,
-                    LumoUtility.Padding.Vertical.SMALL,
-                    LumoUtility.BorderRadius.SMALL
-            );
-            logoutButton.getStyle().set("cursor", "pointer");
-            logoutButton.getElement().setAttribute("title", "Se déconnecter de votre compte");
-            logoutButton.getElement().setAttribute("aria-label", "Se déconnecter de votre compte");
-            buttonsContainer.add(logoutButton);
-        } else {
-            Button loginButton = new Button("Connexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak")));
-            loginButton.addClassNames(
-                    LumoUtility.Background.PRIMARY,
-                    LumoUtility.TextColor.PRIMARY_CONTRAST,
-                    LumoUtility.Padding.Horizontal.MEDIUM,
-                    LumoUtility.Padding.Vertical.SMALL,
-                    LumoUtility.BorderRadius.SMALL
-            );
-            loginButton.getStyle().set("cursor", "pointer");
-            loginButton.getElement().setAttribute("title", "Se connecter à votre compte");
-            loginButton.getElement().setAttribute("aria-label", "Se connecter à votre compte");
-            buttonsContainer.add(loginButton);
-        }
 
         add(navLinks, buttonsContainer);
     }
