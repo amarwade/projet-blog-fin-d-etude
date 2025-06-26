@@ -20,6 +20,7 @@ public class Footer extends VerticalLayout {
                 LumoUtility.Padding.Vertical.MEDIUM
         );
         addClassName("footer-sticky");
+        addClassName("footer-main");
 
         // Liens de navigation
         HorizontalLayout footerLinks = new HorizontalLayout();
@@ -60,6 +61,7 @@ public class Footer extends VerticalLayout {
         );
         link.getStyle().set("text-decoration", "none");
         link.getStyle().set("transition", "color 0.3s ease");
+        link.getElement().setAttribute("aria-label", text + " (lien de pied de page)");
         return link;
     }
 }

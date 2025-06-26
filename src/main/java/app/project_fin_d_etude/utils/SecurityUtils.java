@@ -5,6 +5,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import com.vaadin.flow.server.HandlerHelper;
 import com.vaadin.flow.shared.ApplicationConstants;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import java.util.stream.Stream;
 
@@ -14,7 +15,7 @@ import java.util.stream.Stream;
 public class SecurityUtils {
 
     /**
-     * Retourne l’email (ou l'identifiant principal) de l’utilisateur
+     * Retourne l'email (ou l'identifiant principal) de l'utilisateur
      * actuellement connecté.
      *
      * @return L'email de l'utilisateur connecté, ou null si non authentifié
@@ -48,5 +49,42 @@ public class SecurityUtils {
         return parameterValue != null
                 && Stream.of(HandlerHelper.RequestType.values())
                         .anyMatch(r -> r.getIdentifier().equals(parameterValue));
+    }
+
+    /**
+     * Vérifie si l'utilisateur courant possède un rôle donné.
+     *
+     * @param role Le nom du rôle à vérifier (ex : "ADMIN")
+     * @return true si l'utilisateur possède ce rôle, false sinon
+     */
+    public static boolean hasRole(String role) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getAuthorities() != null) {
+            return auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
+        }
+        return false;
+    }
+
+    /**
+     * Retourne le nom complet de l'utilisateur connecté (si disponible via
+     * OidcUser), sinon null.
+     */
+    public static String getCurrentUserFullName() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof OidcUser) {
+            OidcUser oidcUser = (OidcUser) auth.getPrincipal();
+            String fullName = oidcUser.getFullName();
+            if (fullName != null && !fullName.isBlank()) {
+                return fullName;
+            }
+            // Fallback prénom + nom
+            String givenName = oidcUser.getGivenName();
+            String familyName = oidcUser.getFamilyName();
+            if (givenName != null || familyName != null) {
+                return ((givenName != null ? givenName : "") + " " + (familyName != null ? familyName : "")).trim();
+            }
+        }
+        return null;
     }
 }

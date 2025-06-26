@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H3;
@@ -17,14 +16,15 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
+import com.vaadin.flow.component.AttachEvent;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
+import app.project_fin_d_etude.utils.AsyncDataLoader;
 
 /**
  * Vue affichant la liste des articles (posts) avec pagination. Les posts sont
@@ -34,8 +34,14 @@ import app.project_fin_d_etude.utils.VaadinUtils;
 @PageTitle("Articles")
 public class ArticlesView extends VerticalLayout implements PostPresenter.PostView {
 
+    private static final String NO_ARTICLES = "Aucun article trouvé.";
+    private static final String LOADING_ARTICLES = "Chargement des articles...";
+    private static final String RECENT_POSTS_TITLE = "Articles récents";
+    private static final String SEARCH_PLACEHOLDER = "Titre de l'article";
+
     private final PostPresenter postPresenter;
     private final FlexLayout gridContainer = new FlexLayout();
+    private final AsyncDataLoader asyncDataLoader;
     private String currentKeyword = null;
     private VerticalLayout loader;
 
@@ -44,8 +50,9 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
      * automatiquement à l'initialisation.
      */
     @Autowired
-    public ArticlesView(PostPresenter postPresenter) {
+    public ArticlesView(PostPresenter postPresenter, AsyncDataLoader asyncDataLoader) {
         this.postPresenter = postPresenter;
+        this.asyncDataLoader = asyncDataLoader;
         this.postPresenter.setView(this);
         configureLayout();
 
@@ -60,26 +67,40 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
 
         gridContainer.setWidthFull();
         gridContainer.setFlexWrap(FlexLayout.FlexWrap.WRAP);
-        gridContainer.getStyle().set("gap", "32px");
         gridContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        gridContainer.getStyle().set("max-width", "80%").set("margin", "32px auto 0 auto").set("padding", "16px");
+        gridContainer.getStyle()
+                .set("max-width", "100%")
+                .set("margin", "32px auto 0 auto")
+                .set("padding", "16px")
+                .set("box-sizing", "border-box")
+                .set("display", "flex")
+                .set("flex-wrap", "wrap")
+                .set("justify-content", "center");
         gridContainer.getStyle().set("box-sizing", "border-box");
-        add(new H3("Recent blog posts") {
+        add(new H3(RECENT_POSTS_TITLE) {
             {
-                //mettre un left margin auto pour centrer le titre
                 getStyle().set("margin-top", "32px");
                 getStyle().set("text-align", "center");
                 getStyle().set("font-size", "1.5rem");
                 getStyle().set("font-weight", "bold");
                 getStyle().set("width", "100%");
-                
-
             }
         });
         add(gridContainer);
+    }
 
-        showLoader();
-        postPresenter.chargerPosts();
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        if (attachEvent.isInitialAttach()) {
+            // Utilisation du loader asynchrone
+            asyncDataLoader.loadData(
+                    gridContainer,
+                    postPresenter::getAllPostsSync,
+                    this::afficherPosts,
+                    this::afficherErreur
+            );
+        }
     }
 
     private VerticalLayout createMainSection() {
@@ -121,21 +142,18 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
      */
     private HorizontalLayout createSearchBar() {
         TextField searchField = new TextField();
-        searchField.setPlaceholder("Articles name or category");
+        searchField.setPlaceholder(SEARCH_PLACEHOLDER);
         searchField.setWidth("350px");
         searchField.setClearButtonVisible(true);
-        searchField.setValueChangeMode(ValueChangeMode.EAGER);
-
-        searchField.addValueChangeListener(e -> {
-            String value = e.getValue();
-            showLoader();
-            currentKeyword = (value != null) ? value.trim() : null;
-            postPresenter.rechercherArticles(currentKeyword);
-        });
 
         Button searchButton = new Button("RECHERCHER", e -> {
-            showLoader();
-            postPresenter.rechercherArticles(searchField.getValue());
+            String keyword = searchField.getValue();
+            asyncDataLoader.loadData(
+                    gridContainer,
+                    () -> postPresenter.searchAllPosts(keyword),
+                    this::afficherPosts,
+                    this::afficherErreur
+            );
         });
         searchButton.getStyle().set("background-color", "#6c63ff").set("color", "white").set("border-radius", "8px");
 
@@ -152,25 +170,26 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
      */
     @Override
     public void afficherPosts(List<Post> posts) {
-        hideLoader();
-        gridContainer.removeAll();
-        if (posts == null || posts.isEmpty()) {
-            Paragraph emptyMsg = new Paragraph("Aucun article trouvé.");
-            emptyMsg.addClassNames(
-                    LumoUtility.TextColor.SECONDARY,
-                    LumoUtility.TextAlignment.CENTER,
-                    LumoUtility.FontSize.LARGE,
-                    LumoUtility.Margin.Top.XLARGE
-            );
-            gridContainer.add(emptyMsg);
-        } else {
-            for (Post post : posts) {
-                BlogPostCard card = new BlogPostCard(post, p -> getUI().ifPresent(ui -> ui.navigate("user/article/" + p.getId())));
-                card.setWidth("320px");
-                card.getStyle().set("min-width", "260px").set("max-width", "340px");
-                gridContainer.add(card);
+        getUI().ifPresent(ui -> ui.access(() -> {
+            gridContainer.removeAll();
+            if (posts == null || posts.isEmpty()) {
+                Paragraph emptyMsg = new Paragraph(NO_ARTICLES);
+                emptyMsg.addClassNames(
+                        LumoUtility.TextColor.SECONDARY,
+                        LumoUtility.TextAlignment.CENTER,
+                        LumoUtility.FontSize.LARGE,
+                        LumoUtility.Margin.Top.XLARGE
+                );
+                gridContainer.add(emptyMsg);
+            } else {
+                for (Post post : posts) {
+                    BlogPostCard card = new BlogPostCard(post);
+                    card.setWidth("320px");
+                    card.getStyle().set("min-width", "260px").set("max-width", "340px");
+                    gridContainer.add(card);
+                }
             }
-        }
+        }));
     }
 
     private void showLoader() {
@@ -181,17 +200,32 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
             loader.getStyle().set("padding", "50px");
             ProgressBar progress = new ProgressBar();
             progress.setIndeterminate(true);
-            loader.add(new H3("Chargement des articles..."), progress);
+            loader.add(new H3(LOADING_ARTICLES), progress);
         }
-        add(loader);
+        if (loader.getParent().isEmpty()) {
+            add(loader);
+        }
         gridContainer.setVisible(false);
     }
 
     private void hideLoader() {
-        if (loader != null) {
+        if (loader != null && loader.getParent().isPresent()) {
             remove(loader);
         }
         gridContainer.setVisible(true);
+    }
+
+    @Override
+    public void afficherErreur(String erreur) {
+        gridContainer.removeAll();
+        Paragraph errorMsg = new Paragraph(erreur);
+        errorMsg.addClassNames(
+                LumoUtility.TextColor.ERROR,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.FontSize.LARGE,
+                LumoUtility.Margin.Top.XLARGE
+        );
+        gridContainer.add(errorMsg);
     }
 
     // ... autres méthodes d'interface non utilisées
@@ -205,10 +239,6 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
 
     @Override
     public void afficherMessage(String message) {
-    }
-
-    @Override
-    public void afficherErreur(String erreur) {
     }
 
     @Override

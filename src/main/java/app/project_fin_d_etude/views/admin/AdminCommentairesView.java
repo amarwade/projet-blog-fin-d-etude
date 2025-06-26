@@ -9,6 +9,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -112,12 +113,21 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
      */
     private void configureGrid() {
         grid.addClassNames("contact-grid");
-        grid.setColumns("id", "contenu", "dateCreation");
+        grid.setColumns("id", "dateCreation");
+
+        // Colonne contenu multi-ligne
+        grid.addComponentColumn(commentaire -> {
+            Span contenuSpan = new Span(commentaire.getContenu());
+            contenuSpan.getElement().getStyle().set("white-space", "pre-line");
+            contenuSpan.getElement().getStyle().set("word-break", "break-word");
+            contenuSpan.getElement().getStyle().set("max-width", "300px");
+            return contenuSpan;
+        }).setHeader("Contenu").setAutoWidth(true).setFlexGrow(1);
 
         // Colonne pour l'auteur (nom de l'utilisateur)
         grid.addColumn(commentaire -> {
-            if (commentaire.getAuteur() != null) {
-                return commentaire.getAuteur().getNom();
+            if (commentaire.getAuteurNom() != null) {
+                return commentaire.getAuteurNom();
             }
             return "Auteur inconnu";
         }).setHeader("Auteur");
@@ -142,8 +152,9 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
 
             inapproprieBtn.addClickListener(e -> {
                 commentaire.setInapproprie(!commentaire.isInapproprie());
-                commentairePresenter.modifier(commentaire); // ou un service direct si tu préfères
+                commentairePresenter.modifier(commentaire);
                 grid.getDataProvider().refreshItem(commentaire);
+                grid.getDataProvider().refreshAll();
             });
 
             return inapproprieBtn;

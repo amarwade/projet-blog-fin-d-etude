@@ -25,6 +25,7 @@ public class Header extends HorizontalLayout {
         );
         getStyle().set("position", "relative");
         getStyle().set("top", "0");
+        addClassName("header-main");
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
@@ -53,6 +54,7 @@ public class Header extends HorizontalLayout {
             profileLink.getStyle().set("text-decoration", "none");
             profileLink.getStyle().set("transition", "color 0.3s ease");
             profileLink.getStyle().set("cursor", "pointer");
+            profileLink.getElement().setAttribute("aria-label", "Profil utilisateur : " + displayName);
             add(profileLink);
         } else {
             H3 logo = new H3("BIENVENUE!");
@@ -70,12 +72,11 @@ public class Header extends HorizontalLayout {
 
         createNavLink(navLinks, Routes.HOME, "Accueil");
         createNavLink(navLinks, Routes.ARTICLES, "Articles");
-        createNavLink(navLinks, Routes.ABOUT, "A propos");
-        createNavLink(navLinks, Routes.CONTACT, "Contact");
-
         if (isAuthenticated) {
             createNavLink(navLinks, Routes.USER_CREATE_POST, "Créer un Post");
         }
+        createNavLink(navLinks, Routes.ABOUT, "A propos");
+        createNavLink(navLinks, Routes.CONTACT, "Contact");
 
         HorizontalLayout buttonsContainer = new HorizontalLayout();
         buttonsContainer.setSpacing(true);
@@ -92,6 +93,7 @@ public class Header extends HorizontalLayout {
             );
             logoutButton.getStyle().set("cursor", "pointer");
             logoutButton.getElement().setAttribute("title", "Se déconnecter de votre compte");
+            logoutButton.getElement().setAttribute("aria-label", "Se déconnecter de votre compte");
             buttonsContainer.add(logoutButton);
         } else {
             Button loginButton = new Button("Connexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak")));
@@ -104,6 +106,7 @@ public class Header extends HorizontalLayout {
             );
             loginButton.getStyle().set("cursor", "pointer");
             loginButton.getElement().setAttribute("title", "Se connecter à votre compte");
+            loginButton.getElement().setAttribute("aria-label", "Se connecter à votre compte");
             buttonsContainer.add(loginButton);
         }
 
@@ -119,6 +122,7 @@ public class Header extends HorizontalLayout {
         link.getStyle().set("text-decoration", "none");
         link.getStyle().set("transition", "color 0.3s ease");
         link.getStyle().set("cursor", "pointer");
+        link.getElement().setAttribute("aria-label", text + " (lien de navigation)");
         container.add(link);
     }
 }

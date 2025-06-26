@@ -1,6 +1,7 @@
 package app.project_fin_d_etude.model;
 
 import java.time.LocalDateTime;
+import java.io.Serializable;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,7 +19,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Entity
 @Table(name = "commentaire")
-public class Commentaire {
+public class Commentaire implements Serializable {
 
     /**
      * Identifiant unique du commentaire.
@@ -40,11 +41,16 @@ public class Commentaire {
     private LocalDateTime dateCreation = LocalDateTime.now();
 
     /**
-     * Auteur du commentaire (utilisateur).
+     * Email de l'auteur du commentaire (récupéré via Keycloak).
      */
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "utilisateur_id", nullable = false)
-    private Utilisateur auteur;
+    @Column(nullable = false, length = 200)
+    private String auteurEmail;
+
+    /**
+     * Nom complet de l'auteur du commentaire (récupéré via Keycloak).
+     */
+    @Column(nullable = false, length = 200)
+    private String auteurNom;
 
     /**
      * Article auquel le commentaire est associé.

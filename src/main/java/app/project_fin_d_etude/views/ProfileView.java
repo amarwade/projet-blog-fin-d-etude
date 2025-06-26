@@ -1,18 +1,27 @@
 package app.project_fin_d_etude.views;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
+import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
+import app.project_fin_d_etude.model.Post;
+import app.project_fin_d_etude.service.PostService;
+import app.project_fin_d_etude.utils.AsyncDataLoader;
 import app.project_fin_d_etude.utils.VaadinUtils;
 
 /**
@@ -23,18 +32,36 @@ import app.project_fin_d_etude.utils.VaadinUtils;
 @PageTitle("Mon Profil")
 public class ProfileView extends VerticalLayout {
 
-    /**
-     * Construit la vue profil et affiche les informations Keycloak de
-     * l'utilisateur connecté.
-     */
-    public ProfileView() {
+    private static final String NO_PROFILE_INFO = "Aucune information de profil disponible. Veuillez vous reconnecter.";
+    private static final String NO_ARTICLES = "Vous n'avez publié aucun article.";
+    private static final String ERROR_LOADING = "Erreur lors du chargement de vos articles.";
+
+    private final PostService postService;
+    private final AsyncDataLoader asyncDataLoader;
+    private final FlexLayout postsLayout;
+
+    @Autowired
+    public ProfileView(PostService postService, AsyncDataLoader asyncDataLoader) {
+        this.postService = postService;
+        this.asyncDataLoader = asyncDataLoader;
+        this.postsLayout = new FlexLayout();
+
         setSizeFull();
         setAlignItems(Alignment.CENTER);
-        setJustifyContentMode(JustifyContentMode.CENTER);
+        setJustifyContentMode(JustifyContentMode.START);
         addClassNames(LumoUtility.Padding.LARGE, LumoUtility.Background.CONTRAST_5);
+        getStyle().set("padding-top", "80px");
 
         add(createMainSection());
-        add(createProfileCard());
+        add(createProfileContent());
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        if (attachEvent.isInitialAttach()) {
+            loadUserArticles();
+        }
     }
 
     /**
@@ -71,36 +98,91 @@ public class ProfileView extends VerticalLayout {
     }
 
     /**
-     * Crée la carte d'affichage du profil utilisateur connecté.
+     * Affiche d'abord les infos utilisateur, puis ses articles sous forme de
+     * cartes.
      */
-    private VerticalLayout createProfileCard() {
-        final VerticalLayout card = new VerticalLayout();
-        card.setPadding(true);
-        card.setSpacing(false);
-        card.setAlignItems(Alignment.START);
-        card.addClassNames(
-                LumoUtility.Background.BASE,
-                LumoUtility.BorderRadius.LARGE,
-                LumoUtility.Padding.LARGE,
-                LumoUtility.BoxShadow.MEDIUM
-        );
-        card.setMaxWidth("800px");
-        card.setWidthFull();
+    private VerticalLayout createProfileContent() {
+        final VerticalLayout content = new VerticalLayout();
+        content.setWidthFull();
+        content.setAlignItems(Alignment.CENTER);
+        content.setSpacing(true);
+        content.setPadding(false);
 
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser oidcUser) {
-            card.add(new H2("Profil Utilisateur"));
-            final String nom = oidcUser.getGivenName();
-            final String prenom = oidcUser.getFamilyName();
-            final String email = oidcUser.getEmail();
-            final String username = oidcUser.getPreferredUsername();
-            card.add(new Paragraph("Nom : " + (nom != null ? nom : "Non renseigné")));
-            card.add(new Paragraph("Prénom : " + (prenom != null ? prenom : "Non renseigné")));
-            card.add(new Paragraph("Email : " + (email != null ? email : "Non renseigné")));
-            card.add(new Paragraph("Nom d'utilisateur : " + (username != null ? username : "Non renseigné")));
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser) {
+            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+            // Bloc infos utilisateur
+            VerticalLayout userInfo = new VerticalLayout();
+            userInfo.setAlignItems(Alignment.START);
+            userInfo.setWidth("100%");
+            userInfo.setMaxWidth("800px");
+            userInfo.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.Padding.LARGE, LumoUtility.BoxShadow.MEDIUM);
+            userInfo.getStyle().set("border", "2px solidrgb(122, 116, 243)").set("margin-bottom", "32px");
+            String nom = oidcUser.getGivenName();
+            String prenom = oidcUser.getFamilyName();
+            String email = oidcUser.getEmail();
+            String username = oidcUser.getPreferredUsername();
+            userInfo.add(new H2("Profil Utilisateur"));
+            userInfo.add(VaadinUtils.createSeparator("100%"));
+            userInfo.add(new Paragraph("Nom : " + (nom != null ? nom : "Non renseigné")));
+            userInfo.add(new Paragraph("Prénom : " + (prenom != null ? prenom : "Non renseigné")));
+            userInfo.add(new Paragraph("Email : " + (email != null ? email : "Non renseigné")));
+            userInfo.add(new Paragraph("Nom d'utilisateur : " + (username != null ? username : "Non renseigné")));
+            content.add(userInfo);
+
+            // Bloc articles utilisateur (asynchrone)
+            content.add(new H2("Mes articles publiés"));
+            configurePostsLayout();
+            content.add(postsLayout);
         } else {
-            card.add(new Paragraph("Aucune information de profil disponible. Veuillez vous reconnecter."));
+            content.add(new Paragraph(NO_PROFILE_INFO));
         }
-        return card;
+        return content;
     }
+
+    private void configurePostsLayout() {
+        postsLayout.setWidthFull();
+        postsLayout.setFlexWrap(FlexLayout.FlexWrap.WRAP);
+        postsLayout.setJustifyContentMode(FlexLayout.JustifyContentMode.CENTER);
+        postsLayout.getStyle()
+                .set("max-width", "100%")
+                .set("margin", "32px auto 0 auto")
+                .set("padding", "16px")
+                .set("box-sizing", "border-box")
+                .set("display", "flex")
+                .set("flex-wrap", "wrap")
+                .set("justify-content", "center");
+    }
+
+    private void loadUserArticles() {
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser) {
+            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+            String email = oidcUser.getEmail();
+
+            if (email != null && !email.isBlank()) {
+                asyncDataLoader.loadData(
+                        postsLayout,
+                        () -> postService.getPostsByAuteurEmail(email),
+                        (List<Post> posts) -> {
+                            postsLayout.removeAll();
+                            if (posts == null || posts.isEmpty()) {
+                                postsLayout.add(new Paragraph(NO_ARTICLES));
+                            } else {
+                                for (Post post : posts) {
+                                    BlogPostCard card = new BlogPostCard(post);
+                                    card.setWidth("320px");
+                                    card.getStyle().set("min-width", "260px").set("max-width", "340px");
+                                    postsLayout.add(card);
+                                }
+                            }
+                        },
+                        errorMsg -> postsLayout.add(new Paragraph(ERROR_LOADING))
+                );
+            } else {
+                postsLayout.add(new Paragraph(NO_ARTICLES));
+            }
+        }
+    }
+
 }

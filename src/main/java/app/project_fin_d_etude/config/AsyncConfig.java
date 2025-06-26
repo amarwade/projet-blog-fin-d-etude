@@ -3,6 +3,9 @@ package app.project_fin_d_etude.config;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -16,11 +19,16 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @EnableAsync // Active le support asynchrone dans Spring
 public class AsyncConfig {
 
-    // Constantes pour la configuration du pool de threads
-    private static final int CORE_POOL_SIZE = 2;
-    private static final int MAX_POOL_SIZE = 4;
-    private static final int QUEUE_CAPACITY = 100;
-    private static final String THREAD_NAME_PREFIX = "AsyncThread-";
+    private static final Logger logger = LoggerFactory.getLogger(AsyncConfig.class);
+
+    @Value("${async.corePoolSize:2}")
+    private int corePoolSize;
+    @Value("${async.maxPoolSize:4}")
+    private int maxPoolSize;
+    @Value("${async.queueCapacity:100}")
+    private int queueCapacity;
+    @Value("${async.threadNamePrefix:AsyncThread-}")
+    private String threadNamePrefix;
 
     /**
      * Configure et crée un pool de threads pour l'exécution des tâches
@@ -31,25 +39,13 @@ public class AsyncConfig {
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-
-        // Nombre de threads qui seront toujours actifs
-        executor.setCorePoolSize(CORE_POOL_SIZE);
-
-        // Nombre maximum de threads que le pool peut créer
-        executor.setMaxPoolSize(MAX_POOL_SIZE);
-
-        // Nombre maximum de tâches en attente dans la file
-        executor.setQueueCapacity(QUEUE_CAPACITY);
-
-        // Préfixe pour identifier les threads dans les logs
-        executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
-
-        // Politique de gestion si la file est pleine : ici, exécute la tâche dans le thread appelant
+        executor.setCorePoolSize(corePoolSize);
+        executor.setMaxPoolSize(maxPoolSize);
+        executor.setQueueCapacity(queueCapacity);
+        executor.setThreadNamePrefix(threadNamePrefix);
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
-
-        // Initialise le pool de threads
         executor.initialize();
-
+        logger.info("Initialisation du ThreadPoolTaskExecutor : core={}, max={}, queue={}, prefix={}", corePoolSize, maxPoolSize, queueCapacity, threadNamePrefix);
         return executor;
     }
 }

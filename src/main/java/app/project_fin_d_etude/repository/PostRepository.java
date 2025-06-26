@@ -1,7 +1,6 @@
 package app.project_fin_d_etude.repository;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.springframework.data.domain.Page;
@@ -45,52 +44,23 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findAllByOrderByDatePublicationDesc();
 
     /**
-     * Récupère un post par son id avec ses commentaires et son auteur (fetch
-     * join).
+     * Récupère tous les posts d'un auteur par son email.
      *
-     * @param id Identifiant du post
-     * @return Post avec commentaires et auteur
+     * @param auteurEmail Email de l'auteur
+     * @return Liste des posts de cet auteur
      */
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.commentaires LEFT JOIN FETCH p.auteur WHERE p.id = :id")
-    Optional<Post> findByIdWithCommentsAndAuthor(@Param("id") Long id);
+    List<Post> findAllByAuteurEmailOrderByDatePublicationDesc(String auteurEmail);
 
     /**
-     * Récupère tous les posts avec leur auteur (fetch join).
-     *
-     * @return Liste de posts avec auteur
+     * Récupère les posts par une liste d'ids, triés par date de publication
+     * décroissante.
      */
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.auteur")
-    List<Post> findAllWithAuteur();
+    List<Post> findByIdInOrderByDatePublicationDesc(List<Long> ids);
 
     /**
-     * Récupère tous les posts avec leur auteur, triés par date de publication
-     * décroissante (paginé).
-     *
-     * @param pageable Pagination
-     * @return Liste de posts avec auteur triés
+     * Récupère tous les posts de façon asynchrone.
      */
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.auteur ORDER BY p.datePublication DESC")
-    List<Post> findAllWithAuteurPaged(Pageable pageable);
-
-    /**
-     * Récupère les posts par une liste d'ids, avec leur auteur, triés par date de publication décroissante.
-     * @param ids Liste d'identifiants de posts
-     * @return Liste de posts avec auteur triés*/
-    @Query("SELECT p FROM Post p LEFT JOIN FETCH p.auteur WHERE p.id IN :ids ORDER BY p.datePublication DESC")
-    List<Post> findAllWithAuteurByIds(@Param("ids") List<Long> ids);
-
-     /* Récupère tous les posts avec leur auteur de façon asynchrone.
-     * @return Future contenant la liste des posts avec auteur*/
     default CompletableFuture<List<Post>> getAllPosts() {
-        return CompletableFuture.supplyAsync(() -> {
-            List<Post> posts = findAllWithAuteur();
-            // Forcer le chargement de l'auteur pour chaque post
-            for (Post post : posts) {
-                if (post.getAuteur() != null) {
-                    post.getAuteur().getNom();
-                }
-            }
-            return posts;
-        });
+        return CompletableFuture.supplyAsync(this::findAllByOrderByDatePublicationDesc);
     }
 }

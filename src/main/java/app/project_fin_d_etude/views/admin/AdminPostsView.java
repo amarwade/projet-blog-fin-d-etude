@@ -3,6 +3,7 @@ package app.project_fin_d_etude.views.admin;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
@@ -14,9 +15,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.html.Span;
 
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Post;
@@ -24,7 +24,7 @@ import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route(value = "admin/posts", layout = AdminLayout.class)
+@Route(value = "admin/dashboard", layout = AdminLayout.class)
 @PageTitle("Gestion des articles - Administration")
 @RolesAllowed("ADMIN")
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {
@@ -47,6 +47,8 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         configureGrid();
         VaadinUtils.showLoading(this);
         postPresenter.chargerPosts();
+
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getAuthorities());
     }
 
     private VerticalLayout createMainContent() {
@@ -101,13 +103,19 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         grid.setColumns("id", "titre", "datePublication");
 
         grid.addColumn(post -> {
-            if (post.getAuteur() != null) {
-                return post.getAuteur().getNom();
+            if (post.getAuteurNom() != null) {
+                return post.getAuteurNom();
             }
             return "Auteur inconnu";
         }).setHeader("Auteur");
 
-        grid.addColumn(Post::getContenu).setHeader("Contenu");
+        grid.addComponentColumn(post -> {
+            Span contenuSpan = new Span(post.getContenu());
+            contenuSpan.getElement().getStyle().set("white-space", "pre-line");
+            contenuSpan.getElement().getStyle().set("word-break", "break-word");
+            contenuSpan.getElement().getStyle().set("max-width", "300px");
+            return contenuSpan;
+        }).setHeader("Contenu").setAutoWidth(true).setFlexGrow(1);
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
         //un grid colum pour action où il y'aura de bouton qui vont permettre de lire plus de détails post

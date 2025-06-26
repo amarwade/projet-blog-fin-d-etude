@@ -2,13 +2,14 @@ package app.project_fin_d_etude.service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Page;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
 
 import app.project_fin_d_etude.model.Post;
@@ -26,110 +27,106 @@ public class PostService {
     }
 
     /**
-     * Récupère tous les posts avec leur auteur, de façon asynchrone.
-     *
-     * @return Future contenant la liste des posts
+     * Récupère tous les posts triés par date de publication décroissante.
      */
-    @Async
-    public CompletableFuture<List<Post>> getAllPosts() {
-        return CompletableFuture.completedFuture(postRepository.findAllByOrderByDatePublicationDesc());
+    public List<Post> getAllPosts() {
+        return postRepository.findAllByOrderByDatePublicationDesc();
     }
 
     /**
-     * Récupère un post par son identifiant, avec commentaires et auteur, de
-     * façon asynchrone.
-     *
-     * @param id Identifiant du post
-     * @return Future contenant un Optional du post
+     * Récupère un post par son identifiant.
      */
-    @Async
-    public CompletableFuture<Optional<Post>> getPostById(Long id) {
+    public Optional<Post> getPostById(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("L'ID du post ne peut pas être null");
         }
-        return CompletableFuture.completedFuture(postRepository.findByIdWithCommentsAndAuthor(id));
+        return postRepository.findById(id);
     }
 
     /**
-     * Recherche des posts par mot-clé avec pagination, de façon asynchrone.
-     *
-     * @param keyword Mot-clé à rechercher
-     * @param page Numéro de page
-     * @param size Taille de page
-     * @return Future contenant une page de posts
+     * Recherche des posts par mot-clé avec pagination.
      */
-    @Async
-    public CompletableFuture<Page<Post>> searchPosts(String keyword, int page, int size) {
+    public Page<Post> searchPosts(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         if (keyword == null || keyword.trim().isEmpty()) {
-            return CompletableFuture.completedFuture(postRepository.findAllOrderByDatePublicationDesc(pageable));
+            return postRepository.findAllOrderByDatePublicationDesc(pageable);
         }
-        return CompletableFuture.completedFuture(postRepository.searchPosts(keyword, pageable));
+        return postRepository.searchPosts(keyword.trim(), pageable);
     }
 
     /**
-     * Récupère une page de posts avec leur auteur, de façon asynchrone.
-     *
-     * @param page Numéro de page
-     * @param size Taille de page
-     * @return Future contenant la liste des posts de la page
+     * Récupère une page de posts.
      */
-    @Async
-    public CompletableFuture<List<Post>> getPaginatedPosts(int page, int size) {
+    public List<Post> getPaginatedPosts(int page, int size) {
         validatePaginationParameters(page, size);
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> pageResult = postRepository.findAll(pageable);
-        List<Long> ids = pageResult.map(Post::getId).getContent();
-        List<Post> posts = ids.isEmpty() ? List.of() : postRepository.findAllWithAuteurByIds(ids);
-        return CompletableFuture.completedFuture(posts);
+        Page<Post> pageResult = postRepository.findAllOrderByDatePublicationDesc(pageable);
+        return pageResult.getContent();
     }
 
     /**
-     * Sauvegarde un post après validation, de façon asynchrone.
-     *
-     * @param post Le post à sauvegarder
-     * @return Future contenant le post sauvegardé
+     * Sauvegarde un post après validation.
      */
-    @Async
-    public CompletableFuture<Post> savePost(Post post) {
+    public Post savePost(Post post) {
         if (post.getId() == null) {
             post.setDatePublication(java.time.LocalDateTime.now());
         }
-        associateDefaultAuthor(post);
+        // Injection automatique de l'auteur connecté si non renseigné
+        if (post.getAuteurNom() == null || post.getAuteurNom().isBlank() || post.getAuteurEmail() == null || post.getAuteurEmail().isBlank()) {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
+                if (post.getAuteurEmail() == null || post.getAuteurEmail().isBlank()) {
+                    post.setAuteurEmail(oidcUser.getEmail());
+                }
+                String givenName = oidcUser.getGivenName();
+                String familyName = oidcUser.getFamilyName();
+                if (post.getAuteurNom() == null || post.getAuteurNom().isBlank()) {
+                    if (givenName != null && familyName != null) {
+                        post.setAuteurNom(givenName + " " + familyName);
+                    } else if (oidcUser.getFullName() != null) {
+                        post.setAuteurNom(oidcUser.getFullName());
+                    } else {
+                        post.setAuteurNom(oidcUser.getEmail());
+                    }
+                }
+            }
+        }
         validatePost(post);
-        return CompletableFuture.completedFuture(postRepository.save(post));
+        return postRepository.save(post);
     }
 
     /**
-     * Supprime un post par son identifiant, de façon asynchrone.
-     *
-     * @param id Identifiant du post
-     * @return Future complétée une fois la suppression effectuée
+     * Supprime un post par son identifiant.
      */
-    @Async
-    public CompletableFuture<Void> delete(Long id) {
+    public void delete(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("L'ID du post ne peut pas être null");
         }
         postRepository.deleteById(id);
-        return CompletableFuture.completedFuture(null);
     }
 
     /**
-     * Vérifie que le post a bien un auteur défini.
-     *
-     * @param post Le post à vérifier
+     * Recherche des posts par mot-clé sans pagination.
      */
-    private void associateDefaultAuthor(Post post) {
-        if (post.getAuteur() == null) {
-            throw new RuntimeException("L'auteur du post doit être défini (utilisateur connecté).");
+    public List<Post> searchAllPosts(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllPosts();
         }
+        return postRepository.searchAllPosts(keyword.trim());
+    }
+
+    /**
+     * Récupère tous les posts d'un auteur par son email.
+     */
+    public List<Post> getPostsByAuteurEmail(String auteurEmail) {
+        if (auteurEmail == null || auteurEmail.trim().isEmpty()) {
+            throw new IllegalArgumentException("L'email de l'auteur ne peut pas être vide");
+        }
+        return postRepository.findAllByAuteurEmailOrderByDatePublicationDesc(auteurEmail);
     }
 
     /**
      * Valide les champs obligatoires d'un post.
-     *
-     * @param post Le post à valider
      */
     private void validatePost(Post post) {
         EntityValidator.ValidationResult validation = EntityValidator.validatePost(post);
@@ -140,9 +137,6 @@ public class PostService {
 
     /**
      * Valide les paramètres de pagination.
-     *
-     * @param page Numéro de page
-     * @param size Taille de page
      */
     private void validatePaginationParameters(int page, int size) {
         if (page < 0) {
@@ -151,13 +145,5 @@ public class PostService {
         if (size <= 0) {
             throw new IllegalArgumentException("La taille de page doit être positive");
         }
-    }
-
-    @Async
-    public CompletableFuture<List<Post>> searchAllPosts(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllPosts();
-        }
-        return CompletableFuture.completedFuture(postRepository.searchAllPosts(keyword.trim()));
     }
 }

@@ -3,7 +3,6 @@ package app.project_fin_d_etude.utils;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.model.Post;
-import app.project_fin_d_etude.model.Utilisateur;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +43,11 @@ public final class EntityValidator {
             }
         }
 
-        if (post.getAuteur() == null) {
-            errors.add("L'auteur de l'article est obligatoire");
+        if (post.getAuteurEmail() == null || post.getAuteurEmail().trim().isEmpty()) {
+            errors.add("L'email de l'auteur de l'article est obligatoire");
+        }
+        if (post.getAuteurNom() == null || post.getAuteurNom().trim().isEmpty()) {
+            errors.add("Le nom de l'auteur de l'article est obligatoire");
         }
 
         return errors.isEmpty() ? ValidationResult.success() : ValidationResult.error(errors);
@@ -114,37 +116,11 @@ public final class EntityValidator {
             errors.add("L'article associé au commentaire est obligatoire");
         }
 
-        if (commentaire.getAuteur() == null) {
-            errors.add("L'auteur du commentaire est obligatoire");
+        if (commentaire.getAuteurEmail() == null || commentaire.getAuteurEmail().trim().isEmpty()) {
+            errors.add("L'email de l'auteur du commentaire est obligatoire");
         }
-
-        return errors.isEmpty() ? ValidationResult.success() : ValidationResult.error(errors);
-    }
-
-    /**
-     * Valide une entité Utilisateur.
-     *
-     * @param utilisateur L'utilisateur à valider
-     * @return Résultat de la validation
-     */
-    public static ValidationResult validateUtilisateur(Utilisateur utilisateur) {
-        List<String> errors = new ArrayList<>();
-
-        if (utilisateur == null) {
-            errors.add("L'utilisateur ne peut pas être null");
-            return ValidationResult.error(errors);
-        }
-
-        if (!ValidationUtils.isValidName(utilisateur.getNom())) {
-            errors.add(ValidationUtils.ERROR_NAME_INVALID);
-        }
-
-        if (!ValidationUtils.isValidEmail(utilisateur.getEmail())) {
-            errors.add(ValidationUtils.ERROR_EMAIL_INVALID);
-        }
-
-        if (utilisateur.getRole() == null) {
-            errors.add("Le rôle de l'utilisateur est obligatoire");
+        if (commentaire.getAuteurNom() == null || commentaire.getAuteurNom().trim().isEmpty()) {
+            errors.add("Le nom de l'auteur du commentaire est obligatoire");
         }
 
         return errors.isEmpty() ? ValidationResult.success() : ValidationResult.error(errors);

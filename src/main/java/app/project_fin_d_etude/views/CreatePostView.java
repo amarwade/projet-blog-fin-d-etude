@@ -1,7 +1,5 @@
 package app.project_fin_d_etude.views;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,12 +19,12 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
-import app.project_fin_d_etude.model.Utilisateur;
 import app.project_fin_d_etude.presenter.PostPresenter;
-import app.project_fin_d_etude.service.UtilisateurService;
 import app.project_fin_d_etude.utils.SecurityUtils;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
+
+import java.util.List;
 
 /**
  * Vue permettant à l'utilisateur connecté de créer un nouvel article.
@@ -36,7 +34,6 @@ import app.project_fin_d_etude.utils.ValidationUtils;
 public class CreatePostView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
-    private final UtilisateurService utilisateurService;
     private TextField titleField;
     private TextArea contentArea;
 
@@ -44,9 +41,8 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
      * Constructeur de la vue de création d'article.
      */
     @Autowired
-    public CreatePostView(PostPresenter postPresenter, UtilisateurService utilisateurService) {
+    public CreatePostView(PostPresenter postPresenter) {
         this.postPresenter = postPresenter;
-        this.utilisateurService = utilisateurService;
         this.postPresenter.setView(this);
         configureLayout();
         add(createMainContent());
@@ -83,19 +79,28 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
      * Affiche les informations de l'utilisateur connecté.
      */
     private Component createUserInfoSection() {
-        String userEmail = SecurityUtils.getCurrentUserEmail();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String displayName = "Utilisateur inconnu";
+        if (authentication != null && authentication.getPrincipal() instanceof OidcUser) {
+            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+            String givenName = oidcUser.getGivenName();
+            String familyName = oidcUser.getFamilyName();
+            if (givenName != null && familyName != null) {
+                displayName = givenName + " " + familyName;
+            } else if (oidcUser.getFullName() != null) {
+                displayName = oidcUser.getFullName();
+            } else {
+                displayName = oidcUser.getEmail();
+            }
+        }
         VerticalLayout section = new VerticalLayout();
         section.setWidth("50%");
         section.addClassNames(LumoUtility.Padding.MEDIUM, LumoUtility.BorderRadius.MEDIUM);
         section.setAlignItems(Alignment.CENTER);
-        if (userEmail != null) {
-            section.add(
-                    new H3("👤 Auteur du post"),
-                    new Paragraph("Vous allez créer cet article en tant que : " + userEmail)
-            );
-        } else {
-            section.add(new Paragraph("Impossible de récupérer les informations de l'utilisateur connecté."));
-        }
+        section.add(
+                new H3("\uD83D\uDC64 Auteur du post"),
+                new Paragraph("Vous allez créer cet article en tant que : " + displayName)
+        );
         return section;
     }
 
@@ -129,17 +134,25 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser)) {
             VaadinUtils.showErrorNotification("Impossible de récupérer les informations de l'utilisateur connecté.");
             return;
         }
-
-        Utilisateur auteur = utilisateurService.findOrCreateAuteur(oidcUser);
+        OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
 
         Post post = new Post();
         post.setTitre(titleField.getValue().trim());
         post.setContenu(contentArea.getValue().trim());
-        post.setAuteur(auteur);
+        post.setAuteurEmail(oidcUser.getEmail());
+        String givenName = oidcUser.getGivenName();
+        String familyName = oidcUser.getFamilyName();
+        if (givenName != null && familyName != null) {
+            post.setAuteurNom(givenName + " " + familyName);
+        } else if (oidcUser.getFullName() != null) {
+            post.setAuteurNom(oidcUser.getFullName());
+        } else {
+            post.setAuteurNom(oidcUser.getEmail());
+        }
 
         postPresenter.publierPost(post);
     }

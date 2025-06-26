@@ -244,4 +244,6 @@ public final class ValidationUtils {
             return errorMessage;
         }
     }
+
+    // Pour i18n, prévoir une méthode getMessage(String key) à l'avenir
 }

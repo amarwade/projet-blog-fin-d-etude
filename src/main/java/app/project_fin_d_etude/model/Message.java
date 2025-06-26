@@ -3,14 +3,14 @@ package app.project_fin_d_etude.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @Entity
 @Table(name = "message")
-public class Message {
+public class Message implements Serializable {
 
     /**
      * Identifiant unique du message.

@@ -1,6 +1,7 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -14,16 +15,14 @@ import app.project_fin_d_etude.service.PostService;
 import lombok.Setter;
 
 /**
- * Présentateur pour la gestion des articles (posts) avec pattern MVP.
+ * Présentateur pour la gestion des articles (posts) avec le pattern MVP.
  */
 @Component
 public class PostPresenter {
 
-    /**
-     * -- SETTER -- Associe une vue à ce présentateur.
-     */
     @Setter
     private PostView view;
+
     private final PostService postService;
 
     @Autowired
@@ -50,15 +49,38 @@ public class PostPresenter {
     }
 
     /**
-     * Charge tous les articles, sans pagination.
+     * Récupère tous les posts de façon synchrone (bloquante).
+     */
+    public List<Post> getAllPostsSync() {
+        try {
+            return postService.getAllPosts();
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la récupération des articles.", e);
+        }
+    }
+
+    /**
+     * Recherche des articles par mot-clé, de façon synchrone (bloquante).
+     */
+    public List<Post> searchAllPosts(String keyword) {
+        try {
+            return postService.searchAllPosts(keyword);
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur lors de la recherche des articles.", e);
+        }
+    }
+
+    /**
+     * Charge tous les articles de manière asynchrone.
      */
     public void chargerPosts() {
         if (view == null) {
             return;
         }
         PostView currentView = this.view;
+
         handleAsyncOperation(
-                postService.getAllPosts(),
+                CompletableFuture.supplyAsync(postService::getAllPosts),
                 "Erreur lors du chargement des articles",
                 currentView::afficherPosts
         );
@@ -72,13 +94,13 @@ public class PostPresenter {
             return;
         }
         PostView currentView = this.view;
+
         handleAsyncOperation(
-                postService.getPostById(postId),
+                CompletableFuture.supplyAsync(() -> postService.getPostById(postId)),
                 "Erreur lors du chargement de l'article",
                 optionalPost -> {
                     if (optionalPost.isPresent()) {
-                        Post post = optionalPost.get();
-                        currentView.afficherPost(post);
+                        currentView.afficherPost(optionalPost.get());
                     } else {
                         currentView.afficherErreur("Article non trouvé");
                     }
@@ -94,9 +116,10 @@ public class PostPresenter {
             return;
         }
         PostView currentView = this.view;
+
         if (validatePost(post, currentView)) {
             handleAsyncOperation(
-                    postService.savePost(post),
+                    CompletableFuture.supplyAsync(() -> postService.savePost(post)),
                     "Erreur lors de la publication",
                     savedPost -> {
                         currentView.afficherMessage("Article publié avec succès !");
@@ -115,9 +138,10 @@ public class PostPresenter {
             return;
         }
         PostView currentView = this.view;
+
         if (validatePost(post, currentView)) {
             handleAsyncOperation(
-                    postService.savePost(post),
+                    CompletableFuture.supplyAsync(() -> postService.savePost(post)),
                     "Erreur lors de la modification",
                     updatedPost -> {
                         currentView.afficherMessage("Article modifié avec succès !");
@@ -135,8 +159,9 @@ public class PostPresenter {
             return;
         }
         PostView currentView = this.view;
+
         handleAsyncOperation(
-                postService.delete(postId),
+                CompletableFuture.runAsync(() -> postService.delete(postId)),
                 "Erreur lors de la suppression",
                 unused -> {
                     currentView.afficherMessage("Article supprimé avec succès");
@@ -146,15 +171,16 @@ public class PostPresenter {
     }
 
     /**
-     * Recherche des articles par mot-clé, sans pagination.
+     * Recherche des articles par mot-clé de façon asynchrone.
      */
     public void rechercherArticles(String keyword) {
         if (view == null) {
             return;
         }
         PostView currentView = this.view;
+
         handleAsyncOperation(
-                postService.searchAllPosts(keyword),
+                CompletableFuture.supplyAsync(() -> postService.searchAllPosts(keyword)),
                 "Erreur lors de la recherche",
                 currentView::afficherPosts
         );
@@ -176,7 +202,8 @@ public class PostPresenter {
     }
 
     /**
-     * Gère les opérations asynchrones et la gestion des erreurs.
+     * Gère les opérations asynchrones avec affichage de résultats ou gestion
+     * d'erreur.
      */
     private <T> void handleAsyncOperation(
             CompletableFuture<T> future,
@@ -184,25 +211,21 @@ public class PostPresenter {
             Consumer<T> onSuccess
     ) {
         PostView currentView = this.view;
-        if (currentView == null) {
-            return;
-        }
-
         UI ui = UI.getCurrent();
-        if (ui == null) {
-            // Log or handle the case where UI is not available
+
+        if (currentView == null || ui == null) {
             return;
         }
 
-        future.whenComplete((result, ex) -> {
+        future.whenCompleteAsync((result, ex) -> {
             ui.access(() -> {
                 if (ex != null) {
-                    currentView.afficherErreur(errorMessage + ": " + ex.getCause().getMessage());
+                    currentView.afficherErreur(errorMessage + " : " + ex.getMessage());
                 } else {
                     try {
                         onSuccess.accept(result);
                     } catch (Exception e) {
-                        currentView.afficherErreur("Erreur lors du traitement des données: " + e.getMessage());
+                        currentView.afficherErreur("Erreur lors du traitement : " + e.getMessage());
                     }
                 }
             });

@@ -9,22 +9,20 @@ public class MainLayout extends AppLayout implements RouterLayout {
     public MainLayout() {
         setPrimarySection(Section.NAVBAR);
         addToNavbar(new Header());
-
+        addClassName("main-layout");
         // Layout principal qui contiendra le contenu dynamique et le footer
         VerticalLayout mainLayout = new VerticalLayout();
         mainLayout.setSizeFull();
         mainLayout.setPadding(false);
         mainLayout.setSpacing(false);
         mainLayout.setMargin(false);
-
-        // Le contenu dynamique sera injecté automatiquement par Vaadin dans ce layout
+        // Slot pour du contenu dynamique (exemple)
+        // mainLayout.add(new Div()); // Ici, tu peux ajouter dynamiquement du contenu par page
         mainLayout.setFlexGrow(1.0);
-
-        // Ajoute le footer à la fin
         Footer footer = new Footer();
         footer.addClassName("footer-sticky");
         mainLayout.add(footer);
-
         setContent(mainLayout);
+        // Pour i18n, prévoir une méthode getMessage(String key) à l'avenir
     }
 }

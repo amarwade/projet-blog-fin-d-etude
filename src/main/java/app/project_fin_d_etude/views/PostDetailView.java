@@ -2,7 +2,6 @@ package app.project_fin_d_etude.views;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -28,10 +27,8 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
-import app.project_fin_d_etude.model.Utilisateur;
 import app.project_fin_d_etude.presenter.CommentairePresenter;
 import app.project_fin_d_etude.presenter.PostPresenter;
-import app.project_fin_d_etude.service.UtilisateurService;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
 
@@ -46,22 +43,20 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     private static final String DATE_FORMAT = "dd MMMM yyyy";
     private static final String NO_COMMENTS_MESSAGE = "Aucun commentaire pour le moment. Soyez le premier à commenter !";
     private static final String COMMENT_PLACEHOLDER = "Écrivez votre commentaire ici...";
-    private static final String DEFAULT_AUTHOR_NAME = "Anonyme";
 
     private final PostPresenter postPresenter;
     private final CommentairePresenter commentairePresenter;
     private final DateTimeFormatter dateFormatter;
-    private final UtilisateurService utilisateurService;
+
     private VerticalLayout commentsSection;
     private TextArea commentTextArea;
     private Button submitButton;
     private Post currentPost;
 
     @Autowired
-    public PostDetailView(PostPresenter postPresenter, CommentairePresenter commentairePresenter, UtilisateurService utilisateurService) {
+    public PostDetailView(PostPresenter postPresenter, CommentairePresenter commentairePresenter) {
         this.postPresenter = postPresenter;
         this.commentairePresenter = commentairePresenter;
-        this.utilisateurService = utilisateurService;
         this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
         this.postPresenter.setView(this);
         this.commentairePresenter.setView(this);
@@ -156,9 +151,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      * Crée les métadonnées de l'article (auteur, date).
      */
     private HorizontalLayout createPostMetadata(Post post) {
-        String authorName = Optional.ofNullable(post.getAuteur())
-                .map(a -> a.getNom())
-                .orElse(DEFAULT_AUTHOR_NAME);
+        String authorName = post.getAuteurNom() != null && !post.getAuteurNom().isBlank() ? post.getAuteurNom() : "Auteur inconnu";
         String dateStr = post.getDatePublication() != null ? post.getDatePublication().format(dateFormatter) : "";
 
         Paragraph auteurPara = new Paragraph("Par " + authorName);
@@ -187,7 +180,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 .set("border", "1px solid #e0e0e0")
                 .set("padding", "1.2em")
                 .set("margin-bottom", "2em")
-                .set("width", "70%")
+                .set("width", "60%")
                 .set("align-self", "center")
                 .set("text-align", "left");
 
@@ -250,16 +243,25 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         }
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser)) {
             VaadinUtils.showErrorNotification("Impossible de récupérer l'utilisateur connecté.");
             return;
         }
-        Utilisateur auteur = utilisateurService.findOrCreateAuteur(oidcUser);
+        OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
 
         Commentaire commentaire = new Commentaire();
         commentaire.setContenu(commentTextArea.getValue().trim());
         commentaire.setPost(currentPost);
-        commentaire.setAuteur(auteur);
+        commentaire.setAuteurEmail(oidcUser.getEmail());
+        String givenName = oidcUser.getGivenName();
+        String familyName = oidcUser.getFamilyName();
+        if (givenName != null && familyName != null) {
+            commentaire.setAuteurNom(givenName + " " + familyName);
+        } else if (oidcUser.getFullName() != null) {
+            commentaire.setAuteurNom(oidcUser.getFullName());
+        } else {
+            commentaire.setAuteurNom(oidcUser.getEmail());
+        }
         commentairePresenter.ajouter(commentaire);
     }
 
@@ -296,7 +298,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 .set("padding", "1em");
 
         // Auteur et date
-        String auteur = commentaire.getAuteur() != null ? commentaire.getAuteur().getNom() : "Auteur inconnu";
+        String auteur = commentaire.getAuteurNom() != null ? commentaire.getAuteurNom() : "Auteur inconnu";
         String date = commentaire.getDateCreation() != null ? commentaire.getDateCreation().format(dateFormatter) : "";
         Span auteurDate = new Span(auteur + " • " + date);
         auteurDate.getStyle().set("font-weight", "bold").set("font-size", "0.95em").set("display", "block").set("margin-bottom", "0.3em");

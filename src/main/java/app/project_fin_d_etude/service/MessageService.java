@@ -30,7 +30,9 @@ public class MessageService {
         if (!validationResult.isValid()) {
             throw new IllegalArgumentException("Message invalide: " + validationResult.getAllErrorsAsString());
         }
-        return CompletableFuture.completedFuture(messageRepository.save(message));
+        Message saved = messageRepository.save(message);
+        System.out.println(">>> Message sauvegardé : " + saved);
+        return CompletableFuture.completedFuture(saved);
     }
 
     /**
