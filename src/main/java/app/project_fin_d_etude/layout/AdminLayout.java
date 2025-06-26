@@ -78,7 +78,7 @@ public class AdminLayout extends AppLayout {
         nav.addItem(createNavItem("A propos", VaadinIcon.INFO_CIRCLE.create(), "/about"));
         nav.addItem(createNavItem("Contact", VaadinIcon.PHONE.create(), "/contact"));
         nav.addItem(createNavItem("Profil", VaadinIcon.USER.create(), "/user/profile"));
-        nav.addItem(createNavItem("Gestion des articles", VaadinIcon.EDIT.create(), "/admin/Dashboard"));
+        nav.addItem(createNavItem("Gestion des articles", VaadinIcon.EDIT.create(), "/admin/dashboard"));
         nav.addItem(createNavItem("Gestion des utilisateurs", VaadinIcon.USERS.create(), "/admin/keycloak-users"));
         nav.addItem(createNavItem("Gestion des commentaires", VaadinIcon.COMMENT.create(), "/admin/commentaires"));
         nav.addItem(createNavItem("Listes des messages", VaadinIcon.ENVELOPE.create(), "/admin/messages"));

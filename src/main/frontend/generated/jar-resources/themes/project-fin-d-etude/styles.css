@@ -112,3 +112,40 @@ vaadin-side-nav.admin-sidenav [part="icon"] {
     overflow: hidden !important;
 }
 
+.theme-btn {
+    background: #fff;
+    color: #111;
+    border: 1px solid #111;
+    border-radius: 6px;
+    font-weight: bold;
+    margin-right: 8px;
+    transition: background 0.2s, color 0.2s;
+}
+.theme-btn:hover {
+    background: #111;
+    color: #fff;
+    border: 1px solid #fff;
+}
+
+body.dark-theme .theme-btn {
+    background: #fff;
+    color: #111;
+    border: 1px solid #fff;
+}
+body.dark-theme .theme-btn:hover {
+    background: #222;
+    color: #fff;
+    border: 1px solid #fff;
+}
+
+body.light-theme .theme-btn {
+    background: #111;
+    color: #fff;
+    border: 1px solid #111;
+}
+body.light-theme .theme-btn:hover {
+    background: #fff;
+    color: #111;
+    border: 1px solid #111;
+}
+

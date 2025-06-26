@@ -82,6 +82,21 @@ public class Header extends HorizontalLayout {
         buttonsContainer.setSpacing(true);
         buttonsContainer.setAlignItems(Alignment.CENTER);
 
+        // Bouton Thème
+        Button themeButton = new Button("Thème", event -> {
+            getUI().ifPresent(ui -> ui.getPage().executeJs(
+                    "document.body.classList.toggle('dark-theme'); document.body.classList.toggle('light-theme');"
+            ));
+        });
+        themeButton.addClassName("theme-btn");
+        themeButton.setIcon(VaadinIcon.MOON_O.create());
+
+        HorizontalLayout userMenu = new HorizontalLayout(themeButton, logoutButton);
+        userMenu.setWidthFull();
+        userMenu.setJustifyContentMode(HorizontalLayout.JustifyContentMode.CENTER);
+        userMenu.setAlignItems(HorizontalLayout.Alignment.CENTER);
+        userMenu.getStyle().set("margin-top", "32px");
+
         if (isAuthenticated) {
             Button logoutButton = new Button("Déconnexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
             logoutButton.addClassNames(
