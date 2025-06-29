@@ -1,7 +1,11 @@
 package app.project_fin_d_etude.views.admin;
 
-import app.project_fin_d_etude.layout.AdminLayout;
-import app.project_fin_d_etude.service.KeycloakUserAdminService;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -18,12 +22,11 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import jakarta.annotation.security.RolesAllowed;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import app.project_fin_d_etude.layout.AdminLayout;
+import app.project_fin_d_etude.service.KeycloakUserAdminService;
 import app.project_fin_d_etude.utils.VaadinUtils;
+import jakarta.annotation.security.RolesAllowed;
 
 /**
  * Vue d'administration des utilisateurs Keycloak : CRUD complet.
@@ -88,7 +91,8 @@ public class AdminKeycloakUsersView extends VerticalLayout {
      */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
+        contentSection.setWidth("100%");
+        contentSection.setHeight("600px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,

@@ -2,13 +2,15 @@ package app.project_fin_d_etude.views;
 
 import java.util.List;
 
+import com.vaadin.flow.component.ComponentEventListener;
+import com.vaadin.flow.shared.Registration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
@@ -16,6 +18,7 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.UI;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
@@ -49,8 +52,8 @@ public class ProfileView extends VerticalLayout {
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.START);
-        addClassNames(LumoUtility.Padding.LARGE, LumoUtility.Background.CONTRAST_5);
-        getStyle().set("padding-top", "80px");
+        addClassNames(LumoUtility.Padding.LARGE, LumoUtility.Background.CONTRAST_5, "profile-view");
+        getStyle().remove("padding-top");
 
         add(createMainSection());
         add(createProfileContent());
@@ -85,8 +88,8 @@ public class ProfileView extends VerticalLayout {
     /**
      * Crée le titre principal de la page profil.
      */
-    private H1 createMainTitle() {
-        final H1 title = new H1("INFORMATIONS PERSONNELLES");
+    private H3 createMainTitle() {
+        final H3 title = new H3("INFORMATIONS PERSONNELLES");
         title.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -116,8 +119,8 @@ public class ProfileView extends VerticalLayout {
             userInfo.setAlignItems(Alignment.START);
             userInfo.setWidth("100%");
             userInfo.setMaxWidth("800px");
-            userInfo.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.Padding.LARGE, LumoUtility.BoxShadow.MEDIUM);
-            userInfo.getStyle().set("border", "2px solidrgb(122, 116, 243)").set("margin-bottom", "32px");
+            userInfo.addClassNames(LumoUtility.Background.BASE, LumoUtility.BorderRadius.LARGE, LumoUtility.Padding.LARGE, LumoUtility.BoxShadow.MEDIUM, "profile-user-info");
+            userInfo.getStyle().remove("border").remove("margin-bottom");
             String nom = oidcUser.getGivenName();
             String prenom = oidcUser.getFamilyName();
             String email = oidcUser.getEmail();
@@ -154,6 +157,11 @@ public class ProfileView extends VerticalLayout {
                 .set("justify-content", "center");
     }
 
+    @Override
+    public Registration addAttachListener(ComponentEventListener<AttachEvent> listener) {
+        return super.addAttachListener(listener);
+    }
+
     private void loadUserArticles() {
         final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser) {
@@ -161,10 +169,10 @@ public class ProfileView extends VerticalLayout {
             String email = oidcUser.getEmail();
 
             if (email != null && !email.isBlank()) {
-                asyncDataLoader.loadData(
+                asyncDataLoader.<List<Post>>loadData(
                         postsLayout,
                         () -> postService.getPostsByAuteurEmail(email),
-                        (List<Post> posts) -> {
+                        posts -> {
                             postsLayout.removeAll();
                             if (posts == null || posts.isEmpty()) {
                                 postsLayout.add(new Paragraph(NO_ARTICLES));
@@ -177,7 +185,8 @@ public class ProfileView extends VerticalLayout {
                                 }
                             }
                         },
-                        errorMsg -> postsLayout.add(new Paragraph(ERROR_LOADING))
+                        errorMsg -> postsLayout.add(new Paragraph(ERROR_LOADING)),
+                        UI.getCurrent()
                 );
             } else {
                 postsLayout.add(new Paragraph(NO_ARTICLES));

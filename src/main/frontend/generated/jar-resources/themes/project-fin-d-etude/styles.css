@@ -31,7 +31,7 @@
     white-space: pre-line;
     word-break: break-word;
     max-width: 500px;
-} 
+}
 
 /* Dans votre fichier styles.css */
 vaadin-side-nav-item {
@@ -52,33 +52,64 @@ vaadin-side-nav-item:hover {
 }
 
 @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.8; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 /* === Personnalisation cohérente du menu latéral admin (noir & blanc) === */
-vaadin-side-nav.admin-sidenav {
-    background: #111 !important;
-    color: #fff !important;
-    min-height: 100vh;
-    border: none;
-}
-vaadin-side-nav.admin-sidenav vaadin-side-nav-item {
+
+.admin-sidenav vaadin-side-nav-item {
     color: #fff !important;
     fill: #fff !important;
     --vaadin-side-nav-item-text-color: #fff;
     --vaadin-side-nav-item-icon-color: #fff;
-    background: #111 !important;
+    background: transparent !important;
+    border-radius: 8px;
+    margin: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.18s, color 0.18s;
 }
-vaadin-side-nav.admin-sidenav vaadin-side-nav-item:hover {
-    background: #742feb !important;
+
+.admin-sidenav vaadin-side-nav-item:hover,
+.admin-sidenav vaadin-side-nav-item[highlighted] {
+    background: #b3b2c4 !important;
     color: #fff !important;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
 }
-vaadin-side-nav.admin-sidenav vaadin-icon,
-vaadin-side-nav.admin-sidenav [part="icon"] {
+
+.admin-layout {
+    background: linear-gradient(135deg, #3c4571 60%, #6c63ff 100%) !important;
+    color: #fff !important;
+    min-height: 100vh;
+    border: none;
+    border-radius: 0 18px 18px 0;
+    box-shadow: 2px 0 16px 0 rgba(44, 62, 80, 0.10);
+    padding-top: 18px;
+}
+
+.admin-sidenav vaadin-side-nav-item[selected] {
+    background: #fff !important;
+    color: #6c63ff !important;
+    font-weight: bold;
+    border-left: 4px solid #6c63ff;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+}
+
+.admin-sidenav vaadin-icon,
+.admin-sidenav [part="icon"] {
     color: #fff !important;
     fill: #fff !important;
+    font-size: 1.2em;
 }
 
 /* Fond noir sur tout le drawer */
@@ -87,7 +118,7 @@ vaadin-side-nav.admin-sidenav [part="icon"] {
 }
 
 /* Fond noir sur le header, le menu et le bouton */
-[part="drawer"] > div,
+[part="drawer"]>div,
 [part="drawer"] vaadin-side-nav.admin-sidenav,
 [part="drawer"] .logout-btn {
     background: #111 !important;
@@ -96,15 +127,268 @@ vaadin-side-nav.admin-sidenav [part="icon"] {
 
 /* Bouton Déconnexion blanc sur fond noir, bien visible */
 .logout-btn {
-    background: #111 !important;
+    background: #3c4571 !important;
     color: #fff !important;
-    border: 1px solid #fff !important;
+    border: 1px solid #6c63ff !important;
     box-shadow: none !important;
+    /* en bas de la page */
+    position: fixed;
+    bottom: 5px;
+    font-size: 12px;
 }
+
 .logout-btn:hover {
     background: #222 !important;
     color: #fff !important;
     border: 1px solid #fff !important;
 }
 
+/* style des blocs d'article */
 
+/* Styles pour BlogPostCard */
+.blog-post-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
+    padding: 28px 24px 24px 24px;
+    margin: 16px;
+    width: 300px;
+    min-width: 220px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+}
+
+.blog-post-card:hover {
+    box-shadow: 0 8px 24px rgba(44, 62, 80, 0.18);
+    transform: translateY(-2px);
+}
+
+.blog-post-card:not(:hover) {
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
+    transform: none;
+}
+
+.blog-post-date {
+    color: rgb(185 186 188);
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.blog-post-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #181c32;
+    margin: 0 0 10px 0;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 98%;
+}
+
+.blog-post-description {
+    color: rgb(98 75 75);
+    font-size: 14px;
+    margin: 0 0 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    max-width: 98%;
+}
+
+.blog-post-button {
+    margin-left: auto;
+    background-color: #6c63ff;
+    color: white;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    padding-left: 28px;
+    padding-right: 28px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+}
+
+/* Styles pour ArticlesView */
+.articles-search-bar-container {
+    margin-top: 24px;
+    margin-bottom: 32px;
+    width: 100%;
+    align-items: center;
+}
+
+.articles-grid {
+    max-width: 100%;
+    margin: 0px auto 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.articles-title {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 100%;
+}
+
+.articles-card {
+    min-width: 260px;
+    max-width: 340px;
+}
+
+.articles-search-btn {
+    background-color: #6c63ff;
+    color: white;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+/* === Styles pour AboutView === */
+.about-view {
+    text-align: center;
+}
+
+.about-main-container {
+    margin: 0 auto;
+}
+
+.about-title {
+    width: 100%;
+    font-size: 18px;
+    text-align: center;
+}
+
+.about-section-content {
+    text-align: left;
+}
+
+/* === Styles pour ProfileView === */
+.profile-view {
+    padding-top: 80px;
+}
+
+.profile-user-info {
+    border: 2px solid rgb(122, 116, 243);
+    margin-bottom: 32px;
+}
+
+/* === Styles pour HomePageView === */
+.home-recent-posts-title {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    width: 100%;
+}
+
+.home-recent-posts-grid {
+    max-width: 100%;
+    margin: 32px auto 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+/* === Styles pour PostDetailView === */
+.post-detail-title {
+    text-align: center;
+    width: 100%;
+}
+
+.post-detail-meta-author {
+    font-weight: bold;
+    margin-right: 1em;
+}
+
+.post-detail-body {
+    background: #f7f7fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e0e0e0;
+    padding: 1.2em;
+    margin-bottom: 2em;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+.post-detail-comments-title {
+    width: 55%;
+}
+
+.post-detail-comment-bubble {
+    background: #f7f7fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 0.5em;
+    padding: 1em;
+}
+
+.post-detail-comment-author-date {
+    font-weight: bold;
+    font-size: 0.95em;
+    display: block;
+    margin-bottom: 0.3em;
+}
+
+.post-detail-comment-inappropriate {
+    color: white;
+    background: #d32f2f;
+    padding: 0.2em 0.7em;
+    border-radius: 8px;
+    font-size: 0.85em;
+    margin-left: 1em;
+}
+
+.post-detail-comment-content {
+    display: block;
+}
+
+/*===style de la decription dans la page home===*/
+.max-w-md {
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* Lien actif dans le header */
+.nav-link-active {
+    color: inherit !important;
+    border-bottom: 2px solid #6c63ff;
+    font-weight: bold;
+}
+
+/* Titre principal admin (gestion des articles, etc.) */
+.admin-section-title {
+    text-align: left;
+    font-size: 18px;
+    font-weight: 800;
+    color: #6154ed;
+    letter-spacing: 1px;
+    text-align: center;
+    margin: 32px 0 24px 0;
+    padding: 0 0 8px 0;
+    padding-left: 20px;
+    background: rgb(255, 255, 255);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+}

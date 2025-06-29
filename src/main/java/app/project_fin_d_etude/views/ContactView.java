@@ -3,6 +3,7 @@ package app.project_fin_d_etude.views;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -37,6 +38,7 @@ public class ContactView extends VerticalLayout {
     @Autowired
     public ContactView(MessagePresenter messagePresenter) {
         this.messagePresenter = messagePresenter;
+        add(createIncitationMessage());
         configureLayout();
         add(createMainContent());
     }
@@ -165,5 +167,16 @@ public class ContactView extends VerticalLayout {
             subjectField.clear();
             messageArea.clear();
         }));
+    }
+
+    private H3 createIncitationMessage() {
+        H3 incitation = new H3("Vous avez une suggestion ou une question ? N'hésitez pas à nous contacter via ce formulaire !");
+        incitation.addClassNames(
+            LumoUtility.FontSize.LARGE,
+            LumoUtility.TextColor.PRIMARY,
+            LumoUtility.Margin.Bottom.LARGE,
+            LumoUtility.TextAlignment.CENTER
+        );
+        return incitation;
     }
 }

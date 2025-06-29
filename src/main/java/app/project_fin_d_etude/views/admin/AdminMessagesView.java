@@ -88,7 +88,8 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
      */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
+        contentSection.setWidth("100%");
+        contentSection.setHeight("600px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,

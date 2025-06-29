@@ -70,7 +70,7 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
     }
 
     private H1 createPageTitle() {
-        H1 pageTitle = new H1("GESTION DES ARTICLES");
+        H1 pageTitle = new H1("GESTION DES POSTS");
         pageTitle.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -83,7 +83,8 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
 
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
+        contentSection.setWidth("100%");
+        contentSection.setHeight("600px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,
@@ -113,7 +114,7 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
             Span contenuSpan = new Span(post.getContenu());
             contenuSpan.getElement().getStyle().set("white-space", "pre-line");
             contenuSpan.getElement().getStyle().set("word-break", "break-word");
-            contenuSpan.getElement().getStyle().set("max-width", "300px");
+            contenuSpan.getElement().getStyle().set("max-width", "150px");
             return contenuSpan;
         }).setHeader("Contenu").setAutoWidth(true).setFlexGrow(1);
 

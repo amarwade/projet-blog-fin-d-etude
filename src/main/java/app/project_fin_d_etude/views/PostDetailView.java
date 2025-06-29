@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
@@ -132,8 +132,11 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     /**
      * Crée le titre de l'article.
      */
-    private H1 createPostTitle(String title) {
-        H1 titleComponent = new H1(title);
+    private H3 createPostTitle(String title) {
+        H3 titleComponent = new H3(title);
+        titleComponent.addClassName("post-detail-title");
+        titleComponent.getStyle().remove("text-align");
+        titleComponent.getStyle().remove("width");
         titleComponent.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -141,8 +144,6 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 LumoUtility.Margin.Bottom.LARGE,
                 LumoUtility.FontWeight.BOLD
         );
-        titleComponent.getStyle().set("text-align", "center");
-        titleComponent.getStyle().set("width", "100%");
 
         return titleComponent;
     }
@@ -155,7 +156,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         String dateStr = post.getDatePublication() != null ? post.getDatePublication().format(dateFormatter) : "";
 
         Paragraph auteurPara = new Paragraph("Par " + authorName);
-        auteurPara.getStyle().set("font-weight", "bold").set("margin-right", "1em");
+        auteurPara.addClassName("post-detail-meta-author");
+        auteurPara.getStyle().remove("font-weight");
+        auteurPara.getStyle().remove("margin-right");
         Paragraph datePara = new Paragraph(dateStr);
 
         HorizontalLayout metadata = new HorizontalLayout(auteurPara, datePara);
@@ -173,16 +176,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      */
     private Div createPostBody(String content) {
         Div contentDiv = new Div(new Paragraph(content));
-        contentDiv.getStyle()
-                .set("background", "#f7f7fa")
-                .set("border-radius", "8px")
-                .set("box-shadow", "0 1px 4px rgba(0,0,0,0.04)")
-                .set("border", "1px solid #e0e0e0")
-                .set("padding", "1.2em")
-                .set("margin-bottom", "2em")
-                .set("width", "60%")
-                .set("align-self", "center")
-                .set("text-align", "left");
+        contentDiv.addClassName("post-detail-body");
+        contentDiv.getStyle().clear();
+        contentDiv.setWidth("50%");
 
         return contentDiv;
     }
@@ -192,7 +188,8 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      */
     private VerticalLayout createCommentsContainer() {
         H2 commentairesTitle = new H2("Commentaires");
-        commentairesTitle.getStyle().set("width", "55%");
+        commentairesTitle.addClassName("post-detail-comments-title");
+        commentairesTitle.getStyle().remove("width");
 
         commentsSection = new VerticalLayout();
         commentsSection.setWidth("55%"); // même largeur que le formulaire
@@ -289,24 +286,23 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      */
     private Div createCommentBubble(Commentaire commentaire) {
         Div bubble = new Div();
-        bubble.getStyle()
-                .set("background", "#f7f7fa")
-                .set("border-radius", "8px")
-                .set("box-shadow", "0 1px 4px rgba(0,0,0,0.04)")
-                .set("border", "1px solid #e0e0e0")
-                .set("margin-bottom", "0.5em")
-                .set("padding", "1em");
+        bubble.addClassName("post-detail-comment-bubble");
+        bubble.getStyle().clear();
 
         // Auteur et date
         String auteur = commentaire.getAuteurNom() != null ? commentaire.getAuteurNom() : "Auteur inconnu";
         String date = commentaire.getDateCreation() != null ? commentaire.getDateCreation().format(dateFormatter) : "";
         Span auteurDate = new Span(auteur + " • " + date);
-        auteurDate.getStyle().set("font-weight", "bold").set("font-size", "0.95em").set("display", "block").set("margin-bottom", "0.3em");
+        auteurDate.addClassName("post-detail-comment-author-date");
+        auteurDate.getStyle().clear();
+        auteurDate.getStyle().set("font-size", "0.95em").set("display", "block").set("margin-bottom", "0.3em");
 
         // Label inapproprié si besoin
         Span inapproprieLabel = null;
         if (commentaire.isInapproprie()) {
             inapproprieLabel = new Span("Inapproprié");
+            inapproprieLabel.addClassName("post-detail-comment-inappropriate");
+            inapproprieLabel.getStyle().clear();
             inapproprieLabel.getStyle()
                     .set("color", "white")
                     .set("background", "#d32f2f")
@@ -318,6 +314,8 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
 
         // Contenu du commentaire
         Span contenu = new Span(commentaire.getContenu() != null ? commentaire.getContenu() : "");
+        contenu.addClassName("post-detail-comment-content");
+        contenu.getStyle().clear();
         contenu.getStyle().set("display", "block");
 
         // Ajout dans la bulle

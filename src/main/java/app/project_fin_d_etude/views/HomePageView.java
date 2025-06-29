@@ -6,16 +6,15 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.orderedlayout.FlexLayout;
-import com.vaadin.flow.component.AttachEvent;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
@@ -49,7 +48,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         add(createMainSection());
 
         H3 recentPostsTitle = new H3("Articles récents");
-        recentPostsTitle.getStyle().set("margin-top", "32px").set("text-align", "center").set("font-size", "1.5rem").set("font-weight", "bold").set("width", "100%");
+        recentPostsTitle.addClassName("home-recent-posts-title");
         add(recentPostsTitle);
 
         postsContainer = new VerticalLayout();
@@ -73,7 +72,8 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
                         postsContainer.add(recentPostsGrid);
                         afficherArticlesRecents(posts);
                     },
-                    errorMessage -> VaadinUtils.showErrorNotification(errorMessage)
+                    errorMessage -> VaadinUtils.showErrorNotification(errorMessage),
+                    attachEvent.getUI()
             );
         }
     }
@@ -83,11 +83,8 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         recentPostsGrid.setWidthFull();
         recentPostsGrid.setFlexWrap(FlexLayout.FlexWrap.WRAP);
         recentPostsGrid.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        recentPostsGrid.getStyle()
-                .set("max-width", "100%")
-                .set("margin", "32px auto 0 auto")
-                .set("padding", "16px")
-                .set("box-sizing", "border-box");
+        recentPostsGrid.addClassName("home-recent-posts-grid");
+        recentPostsGrid.getStyle().clear();
     }
 
     private void configureLayout() {
@@ -111,8 +108,8 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         return mainSection;
     }
 
-    private H1 createMainTitle() {
-        final H1 title = new H1("LE BLOG");
+    private H3 createMainTitle() {
+        final H3 title = new H3("LE BLOG");
         title.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -153,7 +150,9 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     public void afficherErreur(final String erreur) {
         getUI().ifPresent(ui -> ui.access(() -> {
             postsContainer.removeAll();
-            postsContainer.add(new Paragraph(erreur));
+            Paragraph errorMsg = new Paragraph("Erreur : " + erreur);
+            errorMsg.getStyle().set("color", "red").set("font-weight", "bold").set("font-size", "1.2em");
+            postsContainer.add(errorMsg);
         }));
     }
 

@@ -8,7 +8,7 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
@@ -37,9 +37,13 @@ public class AdminLayout extends AppLayout {
         setPrimarySection(Section.DRAWER); // Définit la section principale comme le menu latéral
         Div header = createHeader(); // Crée l'en-tête
         Div spacer = new Div(); // Espaceur pour l'esthétique
-        spacer.getStyle().set("height", "32px");
-        // Ajoute l'en-tête, l'espaceur, le menu latéral et le menu utilisateur au drawer
-        addToDrawer(header, spacer, new Scroller(createSideNav()), createUserMenu());
+        spacer.getStyle().set("height", "0px");
+        // Ajoute l'en-tête, l'espaceur, le menu latéral et le menu utilisateur dans un HorizontalLayout
+        VerticalLayout layout = new VerticalLayout(header, spacer, createSideNav(), createUserMenu());
+        layout.setWidthFull();
+        layout.addClassName("admin-layout");
+        layout.setAlignItems(HorizontalLayout.Alignment.START);
+        addToDrawer(layout);
     }
 
     // Crée l'en-tête du layout avec le logo et le nom de l'application

@@ -5,7 +5,6 @@ import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.icon.VaadinIcon;
 
 import app.project_fin_d_etude.utils.Routes;
 import org.springframework.security.core.Authentication;
