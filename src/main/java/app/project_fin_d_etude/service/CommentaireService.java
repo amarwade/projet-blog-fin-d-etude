@@ -3,10 +3,12 @@ package app.project_fin_d_etude.service;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.repository.CommentaireRepository;
+import app.project_fin_d_etude.repository.PostRepository;
 import app.project_fin_d_etude.utils.EntityValidator;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -14,9 +16,11 @@ import java.util.concurrent.CompletableFuture;
 public class CommentaireService {
 
     private final CommentaireRepository commentaireRepository;
+    private final PostRepository postRepository;
 
-    public CommentaireService(CommentaireRepository commentaireRepository) {
+    public CommentaireService(CommentaireRepository commentaireRepository, PostRepository postRepository) {
         this.commentaireRepository = commentaireRepository;
+        this.postRepository = postRepository;
     }
 
     /**
@@ -66,5 +70,22 @@ public class CommentaireService {
     @Async
     public CompletableFuture<List<Commentaire>> getAllCommentaires() {
         return CompletableFuture.completedFuture(commentaireRepository.findAll());
+    }
+
+    public Commentaire repondreAuCommentaire(Long postId, Long parentCommentaireId, String contenu, String auteurNom, String auteurEmail) {
+        System.out.println(">>> Appel repondreAuCommentaire : postId=" + postId + ", parentId=" + parentCommentaireId + ", auteurNom=" + auteurNom + ", auteurEmail=" + auteurEmail);
+        Post post = postRepository.findById(postId).orElseThrow();
+        Commentaire parent = commentaireRepository.findById(parentCommentaireId).orElseThrow();
+
+        Commentaire reponse = new Commentaire();
+        reponse.setPost(post);
+        reponse.setParent(parent);
+        reponse.setContenu(contenu);
+        reponse.setAuteurNom(auteurNom);
+        reponse.setAuteurEmail(auteurEmail);
+        reponse.setDateCreation(LocalDateTime.now());
+
+        System.out.println(">>> Sauvegarde réponse : id=" + reponse.getId() + ", contenu=" + reponse.getContenu() + ", auteur=" + reponse.getAuteurNom());
+        return commentaireRepository.save(reponse);
     }
 }

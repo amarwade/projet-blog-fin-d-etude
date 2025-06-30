@@ -1,11 +1,12 @@
 package app.project_fin_d_etude.utils;
 
-import com.vaadin.flow.component.textfield.TextArea;
-import com.vaadin.flow.component.textfield.TextField;
+import java.util.regex.Pattern;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.regex.Pattern;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 
 /**
  * Classe utilitaire pour centraliser toutes les validations de formulaires.
@@ -25,7 +26,7 @@ public final class ValidationUtils {
             Pattern.UNICODE_CHARACTER_CLASS
     );
     private static final Pattern TITLE_PATTERN = Pattern.compile(
-            "^[a-zA-ZÀ-ÿ0-9\\s'-]{3,100}$",
+            "^[a-zA-ZÀ-ÿ0-9\\s'-]{3,300}$",
             Pattern.UNICODE_CHARACTER_CLASS
     );
     private static final Pattern PHONE_PATTERN = Pattern.compile(
@@ -40,7 +41,7 @@ public final class ValidationUtils {
     public static final String ERROR_FIELD_REQUIRED = "Ce champ est obligatoire";
     public static final String ERROR_EMAIL_INVALID = "Veuillez entrer une adresse email valide";
     public static final String ERROR_NAME_INVALID = "Le nom doit contenir entre 2 et 50 caractères (lettres, espaces, tirets, apostrophes)";
-    public static final String ERROR_TITLE_INVALID = "Le titre doit contenir entre 3 et 100 caractères";
+    public static final String ERROR_TITLE_INVALID = "Le titre doit contenir entre 3 et 300 caractères";
     public static final String ERROR_CONTENT_TOO_SHORT = "Le contenu doit contenir au moins 10 caractères";
     public static final String ERROR_CONTENT_TOO_LONG = "Le contenu ne peut pas dépasser 5000 caractères";
     public static final String ERROR_SUBJECT_INVALID = "Le sujet doit contenir entre 3 et 100 caractères";
@@ -51,7 +52,7 @@ public final class ValidationUtils {
     public static final int MIN_NAME_LENGTH = 2;
     public static final int MAX_NAME_LENGTH = 50;
     public static final int MIN_TITLE_LENGTH = 3;
-    public static final int MAX_TITLE_LENGTH = 100;
+    public static final int MAX_TITLE_LENGTH = 200;
     public static final int MIN_CONTENT_LENGTH = 10;
     public static final int MAX_CONTENT_LENGTH = 5000;
     public static final int MIN_SUBJECT_LENGTH = 3;

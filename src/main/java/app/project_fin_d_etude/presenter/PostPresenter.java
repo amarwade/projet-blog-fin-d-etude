@@ -1,7 +1,6 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -12,6 +11,8 @@ import com.vaadin.flow.component.UI;
 
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.service.PostService;
+import app.project_fin_d_etude.service.CommentaireService;
+
 import lombok.Setter;
 
 /**
@@ -24,10 +25,12 @@ public class PostPresenter {
     private PostView view;
 
     private final PostService postService;
+    private final CommentaireService commentaireService;
 
     @Autowired
-    public PostPresenter(PostService postService) {
+    public PostPresenter(PostService postService, CommentaireService commentaireService) {
         this.postService = postService;
+        this.commentaireService = commentaireService;
     }
 
     /**
@@ -231,4 +234,10 @@ public class PostPresenter {
             });
         });
     }
+
+    public void repondreAuCommentaire(Long postId, Long parentCommentaireId, String contenu, String auteurNom, String auteurEmail) {
+        System.out.println(">>> Presenter: repondreAuCommentaire appelé");
+        commentaireService.repondreAuCommentaire(postId, parentCommentaireId, contenu, auteurNom, auteurEmail);
+    }
+
 }

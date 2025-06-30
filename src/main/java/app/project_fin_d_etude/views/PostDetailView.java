@@ -53,6 +53,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     private Button submitButton;
     private Post currentPost;
 
+    // Ajout d'une variable d'instance pour suivre le champ de réponse ouvert
+    private Div currentlyOpenedReplyDiv = null;
+
     @Autowired
     public PostDetailView(PostPresenter postPresenter, CommentairePresenter commentairePresenter) {
         this.postPresenter = postPresenter;
@@ -178,8 +181,6 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         Div contentDiv = new Div(new Paragraph(content));
         contentDiv.addClassName("post-detail-body");
         contentDiv.getStyle().clear();
-        contentDiv.setWidth("50%");
-
         return contentDiv;
     }
 
@@ -274,11 +275,86 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
             if (commentaires.isEmpty()) {
                 commentsSection.add(new Paragraph(NO_COMMENTS_MESSAGE));
             } else {
-                commentaires.forEach(comment
-                        -> commentsSection.add(createCommentBubble(comment))
-                );
+                // Afficher seulement les commentaires principaux (parent == null)
+                commentaires.stream()
+                        .filter(c -> c.getParent() == null)
+                        .forEach(comment -> commentsSection.add(createCommentBubbleWithReplies(comment, commentaires, 0)));
             }
         }));
+    }
+
+    // Nouvelle méthode pour afficher un commentaire et ses réponses imbriquées
+    private Div createCommentBubbleWithReplies(Commentaire commentaire, List<Commentaire> allCommentaires, int niveau) {
+        Div bubble = createCommentBubble(commentaire);
+
+        // Ajout du bouton "Répondre"
+        Button repondreBtn = new Button("Répondre");
+        bubble.add(repondreBtn);
+
+        // Champ de réponse caché par défaut
+        TextArea reponseArea = new TextArea();
+        reponseArea.setPlaceholder("Votre réponse...");
+        reponseArea.setVisible(false);
+        reponseArea.setHeight("40px"); // Champ plus petit
+        reponseArea.getStyle().setWidth("400px");
+        Button envoyerBtn = new Button("Envoyer");
+        envoyerBtn.setVisible(false);
+
+        // Div englobant le champ de réponse et le bouton envoyer
+        Div replyDiv = new Div(reponseArea, envoyerBtn);
+        replyDiv.setVisible(false);
+        bubble.add(replyDiv);
+
+        repondreBtn.addClickListener(e -> {
+            // Fermer le champ de réponse précédemment ouvert
+            if (currentlyOpenedReplyDiv != null && currentlyOpenedReplyDiv != replyDiv) {
+                currentlyOpenedReplyDiv.setVisible(false);
+                // Réafficher le bouton répondre du précédent (si besoin)
+                if (currentlyOpenedReplyDiv.getParent().isPresent()) {
+                    Div parentBubble = (Div) currentlyOpenedReplyDiv.getParent().get();
+                    parentBubble.getChildren()
+                            .filter(c -> c instanceof Button && ((Button) c).getText().equals("Répondre"))
+                            .findFirst()
+                            .ifPresent(btn -> btn.setVisible(true));
+                }
+            }
+            // Afficher le champ de réponse courant
+            replyDiv.setVisible(true);
+            reponseArea.setVisible(true);
+            envoyerBtn.setVisible(true);
+            repondreBtn.setVisible(false); // Cacher le bouton répondre
+            currentlyOpenedReplyDiv = replyDiv;
+        });
+
+        envoyerBtn.addClickListener(ev -> {
+            String contenu = reponseArea.getValue();
+            if (contenu != null && !contenu.trim().isEmpty()) {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.getPrincipal() instanceof OidcUser) {
+                    OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+                    String auteurNom = oidcUser.getFullName() != null ? oidcUser.getFullName() : oidcUser.getEmail();
+                    String auteurEmail = oidcUser.getEmail();
+                    postPresenter.repondreAuCommentaire(currentPost.getId(), commentaire.getId(), contenu, auteurNom, auteurEmail);
+                }
+            }
+            // Fermer le champ de réponse après envoi
+            replyDiv.setVisible(false);
+            repondreBtn.setVisible(true);
+            reponseArea.clear();
+            reponseArea.getStyle().setWidth("300px");
+            currentlyOpenedReplyDiv = null;
+        });
+
+        // Afficher les réponses (enfants)
+        allCommentaires.stream()
+                .filter(rep -> rep.getParent() != null && rep.getParent().getId().equals(commentaire.getId()))
+                .forEach(rep -> {
+                    Div replyChildDiv = createCommentBubbleWithReplies(rep, allCommentaires, niveau + 1);
+                    replyChildDiv.getStyle().set("margin-left", (niveau + 1) * 30 + "px");
+                    bubble.add(replyChildDiv);
+                });
+
+        return bubble;
     }
 
     /**
@@ -372,7 +448,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         getUI().ifPresent(ui -> ui.navigate("articles"));
     }
 
-// Méthodes non utilisées de PostView
+    // Méthodes non utilisées de PostView
     @Override
     public void afficherPosts(List<Post> posts) {
     }
