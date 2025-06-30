@@ -3,7 +3,9 @@ package app.project_fin_d_etude.layout;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.RouterLayout;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
+@AnonymousAllowed
 public class MainLayout extends AppLayout implements RouterLayout {
 
     public MainLayout() {

@@ -1,7 +1,10 @@
 package app.project_fin_d_etude.views;
 
 import java.util.List;
+import java.util.ArrayList;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.AttachEvent;
@@ -17,6 +20,7 @@ import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.components.BlogPostCard;
@@ -32,8 +36,10 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "articles", layout = MainLayout.class)
 @PageTitle("Articles")
+@AnonymousAllowed
 public class ArticlesView extends VerticalLayout implements PostPresenter.PostView {
 
+    private static final Logger logger = LoggerFactory.getLogger(ArticlesView.class);
     private static final String NO_ARTICLES = "Aucun article trouvé.";
     private static final String LOADING_ARTICLES = "Chargement des articles...";
     private static final String SEARCH_PLACEHOLDER = "Titre de l'article";
@@ -87,16 +93,65 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        logger.info("onAttach appelé, initialAttach: {}", attachEvent.isInitialAttach());
         if (attachEvent.isInitialAttach()) {
-            // Utilisation du loader asynchrone
-            asyncDataLoader.loadData(
-                    gridContainer,
-                    postPresenter::getAllPostsSync,
-                    this::afficherPosts,
-                    this::afficherErreur,
-                    attachEvent.getUI()
-            );
+            logger.info("Début du chargement des articles");
+            Paragraph loadingMessage = new Paragraph(LOADING_ARTICLES);
+            loadingMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER, LumoUtility.FontSize.LARGE);
+            gridContainer.add(loadingMessage);
+            // Affichage de données fictives d'abord
+            logger.info("Test avec des données fictives");
+            List<Post> testPosts = createTestPosts();
+            getUI().ifPresent(ui -> ui.access(() -> {
+                gridContainer.removeAll();
+                afficherPosts(testPosts);
+            }));
+            // Puis tentative de chargement réel
+            try {
+                logger.info("Test de chargement synchrone");
+                List<Post> posts = postPresenter.getAllPostsSync();
+                logger.info("Chargement synchrone réussi: {} posts", posts != null ? posts.size() : 0);
+                getUI().ifPresent(ui -> ui.access(() -> {
+                    gridContainer.removeAll();
+                    afficherPosts(posts);
+                }));
+            } catch (Exception e) {
+                logger.error("Erreur lors du chargement synchrone: {}", e.getMessage(), e);
+                getUI().ifPresent(ui -> ui.access(() -> {
+                    gridContainer.removeAll();
+                    Paragraph errorMsg = new Paragraph("Erreur lors du chargement des articles depuis la base de données. Affichage des données de test.");
+                    errorMsg.getStyle().set("color", "orange").set("font-weight", "bold").set("font-size", "1.2em");
+                    gridContainer.add(errorMsg);
+                    afficherPosts(testPosts);
+                    Button retryButton = new Button("Réessayer", event -> {
+                        gridContainer.removeAll();
+                        onAttach(attachEvent);
+                    });
+                    gridContainer.add(retryButton);
+                }));
+            }
         }
+    }
+
+    private List<Post> createTestPosts() {
+        List<Post> testPosts = new ArrayList<>();
+        Post testPost1 = new Post();
+        testPost1.setId(1L);
+        testPost1.setTitre("Article de test 1");
+        testPost1.setContenu("Ceci est le contenu du premier article de test. Il contient du texte pour tester l'affichage des articles.");
+        testPost1.setAuteurNom("Admin Test");
+        testPost1.setAuteurEmail("admin@test.com");
+        testPost1.setDatePublication(java.time.LocalDateTime.now().minusDays(1));
+        Post testPost2 = new Post();
+        testPost2.setId(2L);
+        testPost2.setTitre("Article de test 2");
+        testPost2.setContenu("Ceci est le contenu du deuxième article de test. Il permet de vérifier que plusieurs articles s'affichent correctement.");
+        testPost2.setAuteurNom("Utilisateur Test");
+        testPost2.setAuteurEmail("user@test.com");
+        testPost2.setDatePublication(java.time.LocalDateTime.now().minusHours(6));
+        testPosts.add(testPost1);
+        testPosts.add(testPost2);
+        return testPosts;
     }
 
     private VerticalLayout createMainSection() {

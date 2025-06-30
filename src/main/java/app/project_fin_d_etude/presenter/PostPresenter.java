@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,8 @@ import lombok.Setter;
  */
 @Component
 public class PostPresenter {
+
+    private static final Logger logger = LoggerFactory.getLogger(PostPresenter.class);
 
     @Setter
     private PostView view;
@@ -55,9 +59,14 @@ public class PostPresenter {
      * Récupère tous les posts de façon synchrone (bloquante).
      */
     public List<Post> getAllPostsSync() {
+        logger.info("Début de getAllPostsSync");
         try {
-            return postService.getAllPosts();
+            logger.info("Appel de postService.getAllPosts()");
+            List<Post> posts = postService.getAllPosts();
+            logger.info("Posts récupérés avec succès: {} articles", posts != null ? posts.size() : 0);
+            return posts;
         } catch (Exception e) {
+            logger.error("Erreur lors de la récupération des articles: {}", e.getMessage(), e);
             throw new RuntimeException("Erreur lors de la récupération des articles.", e);
         }
     }

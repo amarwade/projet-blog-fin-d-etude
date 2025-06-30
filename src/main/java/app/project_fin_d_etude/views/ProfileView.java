@@ -1,9 +1,12 @@
 package app.project_fin_d_etude.views;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.shared.Registration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,10 +16,12 @@ import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.UI;
 
@@ -33,8 +38,10 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "user/profile", layout = MainLayout.class)
 @PageTitle("Mon Profil")
+@AnonymousAllowed
 public class ProfileView extends VerticalLayout {
 
+    private static final Logger logger = LoggerFactory.getLogger(ProfileView.class);
     private static final String NO_PROFILE_INFO = "Aucune information de profil disponible. Veuillez vous reconnecter.";
     private static final String NO_ARTICLES = "Vous n'avez publié aucun article.";
     private static final String ERROR_LOADING = "Erreur lors du chargement de vos articles.";
@@ -42,6 +49,7 @@ public class ProfileView extends VerticalLayout {
     private final PostService postService;
     private final AsyncDataLoader asyncDataLoader;
     private final FlexLayout postsLayout;
+    private VerticalLayout content;
 
     @Autowired
     public ProfileView(PostService postService, AsyncDataLoader asyncDataLoader) {
@@ -56,14 +64,17 @@ public class ProfileView extends VerticalLayout {
         getStyle().remove("padding-top");
 
         add(createMainSection());
-        add(createProfileContent());
+        content = createProfileContent();
+        add(content);
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        logger.info("onAttach appelé, initialAttach: {}", attachEvent.isInitialAttach());
         if (attachEvent.isInitialAttach()) {
-            loadUserArticles();
+            logger.info("Début du chargement du profil utilisateur");
+            loadUserArticlesRobuste(attachEvent);
         }
     }
 
@@ -162,35 +173,35 @@ public class ProfileView extends VerticalLayout {
         return super.addAttachListener(listener);
     }
 
-    private void loadUserArticles() {
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    private void loadUserArticlesRobuste(AttachEvent attachEvent) {
+        postsLayout.removeAll();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser) {
             OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
             String email = oidcUser.getEmail();
-
             if (email != null && !email.isBlank()) {
-                asyncDataLoader.<List<Post>>loadData(
-                        postsLayout,
-                        () -> postService.getPostsByAuteurEmail(email),
-                        posts -> {
-                            postsLayout.removeAll();
-                            if (posts == null || posts.isEmpty()) {
-                                postsLayout.add(new Paragraph(NO_ARTICLES));
-                            } else {
-                                for (Post post : posts) {
-                                    BlogPostCard card = new BlogPostCard(post);
-                                    card.setWidth("320px");
-                                    card.getStyle().set("min-width", "260px").set("max-width", "340px");
-                                    postsLayout.add(card);
-                                }
-                            }
-                        },
-                        errorMsg -> postsLayout.add(new Paragraph(ERROR_LOADING)),
-                        UI.getCurrent()
-                );
+                try {
+                    logger.info("Chargement synchrone des articles de l'utilisateur {}", email);
+                    List<Post> posts = postService.getPostsByAuteurEmail(email);
+                    if (posts == null || posts.isEmpty()) {
+                        postsLayout.add(new Paragraph(NO_ARTICLES));
+                    } else {
+                        for (Post post : posts) {
+                            BlogPostCard card = new BlogPostCard(post);
+                            card.setWidth("320px");
+                            card.getStyle().set("min-width", "260px").set("max-width", "340px");
+                            postsLayout.add(card);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("Erreur lors du chargement des articles de l'utilisateur " + email, e);
+                    postsLayout.add(new Paragraph(ERROR_LOADING));
+                }
             } else {
                 postsLayout.add(new Paragraph(NO_ARTICLES));
             }
+        } else {
+            postsLayout.add(new Paragraph(NO_PROFILE_INFO));
         }
     }
 

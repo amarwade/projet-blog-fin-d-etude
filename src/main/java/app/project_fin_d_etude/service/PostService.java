@@ -3,6 +3,8 @@ package app.project_fin_d_etude.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -19,6 +21,8 @@ import app.project_fin_d_etude.utils.EntityValidator;
 @Service
 public class PostService {
 
+    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
+
     private final PostRepository postRepository;
 
     @Autowired
@@ -30,7 +34,16 @@ public class PostService {
      * Récupère tous les posts triés par date de publication décroissante.
      */
     public List<Post> getAllPosts() {
-        return postRepository.findAllByOrderByDatePublicationDesc();
+        logger.info("Début de getAllPosts dans PostService");
+        try {
+            logger.info("Appel de postRepository.findAllByOrderByDatePublicationDesc()");
+            List<Post> posts = postRepository.findAllByOrderByDatePublicationDesc();
+            logger.info("Posts récupérés depuis le repository: {} articles", posts != null ? posts.size() : 0);
+            return posts;
+        } catch (Exception e) {
+            logger.error("Erreur dans getAllPosts: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
