@@ -1,4 +1,3 @@
-
 package app.project_fin_d_etude.views.admin;
 
 import java.util.List;
@@ -112,12 +111,12 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         }).setHeader("Auteur");
 
         grid.addComponentColumn(post -> {
-            Span contenuSpan = new Span(post.getContenu());
-            contenuSpan.getElement().getStyle().set("white-space", "pre-line");
-            contenuSpan.getElement().getStyle().set("word-break", "break-word");
-            contenuSpan.getElement().getStyle().set("max-width", "150px");
+            String contenu = post.getContenu();
+            String contenuAffiche = contenu != null && contenu.length() > 100 ? contenu.substring(0, 100) + "…" : contenu;
+            Span contenuSpan = new Span(contenuAffiche);
+            contenuSpan.addClassName("admin-posts-contenu");
             return contenuSpan;
-        }).setHeader("Contenu").setAutoWidth(true).setFlexGrow(1);
+        }).setHeader("Contenu").setWidth("120px").setFlexGrow(0);
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
         //un grid colum pour action où il y'aura de bouton qui vont permettre de lire plus de détails post
