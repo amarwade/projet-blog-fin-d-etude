@@ -10,8 +10,8 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
@@ -289,7 +289,10 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
 
         // Ajout du bouton "Répondre"
         Button repondreBtn = new Button("Répondre");
-        bubble.add(repondreBtn);
+        repondreBtn.addClassName("repondre-btn");
+        Div footer = new Div(repondreBtn);
+        footer.addClassName("comment-bubble-footer");
+        bubble.add(footer);
 
         // Champ de réponse caché par défaut
         TextArea reponseArea = new TextArea();
@@ -351,6 +354,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 .forEach(rep -> {
                     Div replyChildDiv = createCommentBubbleWithReplies(rep, allCommentaires, niveau + 1);
                     replyChildDiv.getStyle().set("margin-left", (niveau + 1) * 30 + "px");
+                    replyChildDiv.addClassName("comment-reply");
                     bubble.add(replyChildDiv);
                 });
 
@@ -378,14 +382,6 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         if (commentaire.isInapproprie()) {
             inapproprieLabel = new Span("Inapproprié");
             inapproprieLabel.addClassName("post-detail-comment-inappropriate");
-            inapproprieLabel.getStyle().clear();
-            inapproprieLabel.getStyle()
-                    .set("color", "white")
-                    .set("background", "#d32f2f")
-                    .set("padding", "0.2em 0.7em")
-                    .set("border-radius", "8px")
-                    .set("font-size", "0.85em")
-                    .set("margin-left", "1em");
         }
 
         // Contenu du commentaire

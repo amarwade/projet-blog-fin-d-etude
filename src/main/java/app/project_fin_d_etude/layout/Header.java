@@ -1,15 +1,17 @@
 package app.project_fin_d_etude.layout;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.H3;
+import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.utils.Routes;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 public class Header extends HorizontalLayout {
 
@@ -30,41 +32,30 @@ public class Header extends HorizontalLayout {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
 
+        // Création d'un conteneur horizontal pour le logo et l'icône user
+        HorizontalLayout logoUserContainer = new HorizontalLayout();
+        logoUserContainer.setSpacing(false);
+        logoUserContainer.setPadding(false);
+        logoUserContainer.setAlignItems(Alignment.CENTER);
+
+        Image logoImg = new Image("themes/project-fin-d-etude/logo1.png", "Logo du blog");
+        logoImg.addClassName("header-logo");
+        logoUserContainer.add(logoImg);
+
         if (isAuthenticated) {
-            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-            String email = oidcUser.getEmail();
-            String givenName = oidcUser.getGivenName();
-            String familyName = oidcUser.getFamilyName();
-
-            String displayName = ((givenName != null ? givenName : "") + " " + (familyName != null ? familyName : "")).trim();
-            if (displayName.isBlank()) {
-                displayName = oidcUser.getPreferredUsername();
-            }
-            if (displayName.isBlank()) {
-                displayName = email;
-            }
-
-            Anchor profileLink = new Anchor("/user/profile", displayName);
-            profileLink.addClassNames(
-                    LumoUtility.FontSize.XLARGE,
-                    LumoUtility.Margin.NONE,
-                    LumoUtility.TextColor.PRIMARY,
-                    LumoUtility.FontWeight.BOLD
-            );
-            profileLink.getStyle().set("text-decoration", "none");
-            profileLink.getStyle().set("transition", "color 0.3s ease");
-            profileLink.getStyle().set("cursor", "pointer");
-            profileLink.getElement().setAttribute("aria-label", "Profil utilisateur : " + displayName);
-            add(profileLink);
-        } else {
-            H3 logo = new H3("BIENVENUE!");
-            logo.addClassNames(
-                    LumoUtility.FontSize.XLARGE,
-                    LumoUtility.Margin.NONE,
-                    LumoUtility.FontWeight.BOLD
-            );
-            add(logo);
+            // Icône SVG user
+            Span userIcon = new Span();
+            userIcon.getElement().setProperty("innerHTML",
+                    "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='currentColor' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4'/><path d='M12 14c-4.418 0-8 1.79-8 4v2h16v-2c0-2.21-3.582-4-8-4z'/></svg>");
+            userIcon.getStyle().set("cursor", "pointer");
+            userIcon.getStyle().set("margin-left", "10px");
+            userIcon.getStyle().set("margin-right", "6px");
+            userIcon.getElement().setAttribute("title", "Profil utilisateur");
+            userIcon.addClickListener(e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/user/profile")));
+            userIcon.addClassName("header-user-icon");
+            logoUserContainer.add(userIcon);
         }
+        add(logoUserContainer);
 
         HorizontalLayout navLinks = new HorizontalLayout();
         navLinks.setSpacing(true);
@@ -110,6 +101,7 @@ public class Header extends HorizontalLayout {
         buttonsContainer.setAlignItems(Alignment.CENTER);
 
         add(navLinks, buttonsContainer);
+
     }
 
     private void createNavLink(HorizontalLayout container, String route, String text) {

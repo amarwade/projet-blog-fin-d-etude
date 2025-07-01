@@ -122,10 +122,16 @@ public class PostService {
      * Recherche des posts par mot-clé sans pagination.
      */
     public List<Post> searchAllPosts(String keyword) {
+        logger.info("[DIAG] Entrée dans PostService.searchAllPosts avec keyword='{}'", keyword);
         if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllPosts();
+            logger.info("[DIAG] Keyword vide, appel de getAllPosts()");
+            List<Post> all = getAllPosts();
+            logger.info("[DIAG] getAllPosts() retourne {} articles", all != null ? all.size() : 0);
+            return all;
         }
-        return postRepository.searchAllPosts(keyword.trim());
+        List<Post> result = postRepository.searchAllPosts(keyword.trim());
+        logger.info("[DIAG] Résultat de searchAllPosts (repository) : {} articles", result != null ? result.size() : 0);
+        return result;
     }
 
     /**

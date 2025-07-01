@@ -334,14 +334,16 @@ vaadin-side-nav-item:hover {
 }
 
 .post-detail-comment-bubble {
-    background: #f8f9fa;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
-    padding: 18px 20px 12px 20px;
-    margin-bottom: 18px;
-    border: 1px solid #e0e0e0;
-    position: relative;
-    transition: box-shadow 0.2s;
+    background: #f0f2f5;
+    border-radius: 14px;
+    padding: 4px 10px;
+    margin-bottom: 7px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    max-width: 400px;
+    min-width: 120px;
+    word-break: break-word;
+    border: 1px solid #e4e6eb;
+    font-size: 0.90em;
 }
 
 .post-detail-comment-bubble:hover {
@@ -353,18 +355,16 @@ vaadin-side-nav-item:hover {
 .post-detail-comment-bubble>.post-detail-comment-bubble {
     margin-left: 30px;
     background: #f3f6fa;
-    border-left: 3px solid #6c63ff;
+    border-left: 3px solid #ababad;
 }
 
 /* Style du bouton Répondre */
 .post-detail-comment-bubble button {
-    /* bouton placé a droite du commentaire */
-
     background: #e7e9fc;
     color: #3c4571;
     border: none;
     border-radius: 8px;
-    font-size: 10px;
+    font-size: 6px;
     font-weight: 500;
     padding: 4px 18px;
     cursor: pointer;
@@ -382,7 +382,7 @@ vaadin-side-nav-item:hover {
     max-height: 50px !important;
     border-radius: 8px;
     border: 1px solid #b3b2c4;
-    font-size: 12px;
+    font-size: 8px;
     padding: 2px 8px;
     resize: vertical;
     width: 95%;
@@ -421,23 +421,26 @@ vaadin-side-nav-item:hover {
 }
 
 .post-detail-comment-author-date {
-    font-weight: bold;
-    font-size: 0.95em;
-    display: block;
-    margin-bottom: 0.3em;
+    color: #65676b;
+    font-size: 0.70em;
+    margin-bottom: 2px;
+    font-weight: 500;
 }
 
 .post-detail-comment-inappropriate {
-    color: white;
     background: #d32f2f;
-    padding: 0.2em 0.7em;
+    color: white;
     border-radius: 8px;
+    padding: 2px 10px;
     font-size: 0.85em;
     margin-left: 1em;
 }
 
 .post-detail-comment-content {
-    display: block;
+    color: #050505;
+    font-size: 0.90em;
+    margin-top: 2px;
+    margin-bottom: 4px;
 }
 
 /*===style de la decription dans la page home===*/
@@ -469,4 +472,102 @@ vaadin-side-nav-item:hover {
     background: rgb(255, 255, 255);
     border-radius: 8px 8px 0 0;
     box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+}
+
+/* Champ de réponse */
+.v-textarea[placeholder="Votre réponse..."] {
+    border-radius: 12px;
+    border: 1px solid #ccd0d5;
+    background: #fff;
+    font-size: 1em;
+    padding: 8px;
+}
+
+/* Indentation des réponses */
+.comment-reply {
+    margin-left: 40px;
+}
+
+/* Bouton Répondre */
+button[theme~="primary"] {
+    background: #1877f2;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.92em;
+    padding: 4px 14px;
+    margin-top: 2px;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    background: #d8dfea;
+    color: #1877f2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.comment-text-container {
+    width: 100%;
+}
+
+.comment-author-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #050505;
+    font-size: 0.98em;
+}
+
+.comment-date {
+    color: #65676b;
+    font-size: 0.90em;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.comment-action {
+    color: #65676b;
+    font-size: 0.92em;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.comment-action:hover {
+    color: #1877f2;
+    text-decoration: underline;
+}
+
+/* Logo du header */
+.header-logo {
+    height: 60px;
+    margin-left: 16px;
+    margin-right: 8px;
+    vertical-align: middle;
+    object-fit: contain;
+    display: inline-block;
+}
+
+/* Icône utilisateur du header */
+.header-user-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
 }

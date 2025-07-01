@@ -2,17 +2,18 @@
 package app.project_fin_d_etude.views;
 
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -43,6 +44,8 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     private VerticalLayout postsContainer;
     private final PostPresenter postPresenter;
     private final AsyncDataLoader asyncDataLoader;
+    @Autowired
+    private Executor taskExecutor;
 
     @Autowired
     public HomePageView(final PostPresenter postPresenter, final AsyncDataLoader asyncDataLoader) {
@@ -76,12 +79,10 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         logger.info("onAttach appelé, initialAttach: {}", attachEvent.isInitialAttach());
         if (attachEvent.isInitialAttach()) {
             logger.info("Début du chargement des posts");
-            
             // Affichage immédiat d'un message de chargement
             Paragraph loadingMessage = new Paragraph("Chargement des articles en cours...");
             loadingMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER, LumoUtility.FontSize.LARGE);
             postsContainer.add(loadingMessage);
-            
             // Test avec des données fictives d'abord
             logger.info("Test avec des données fictives");
             List<Post> testPosts = createTestPosts();
@@ -90,42 +91,33 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
                 postsContainer.add(recentPostsGrid);
                 afficherArticlesRecents(testPosts);
             }));
-            
-            // Puis tentative de chargement réel en arrière-plan
-            try {
-                logger.info("Test de chargement synchrone");
-                List<Post> posts = postPresenter.getAllPostsSync();
-                logger.info("Chargement synchrone réussi: {} posts", posts != null ? posts.size() : 0);
-                
-                // Mise à jour de l'UI dans le thread UI
-                getUI().ifPresent(ui -> ui.access(() -> {
-                    postsContainer.removeAll();
-                    postsContainer.add(recentPostsGrid);
-                    afficherArticlesRecents(posts);
-                }));
-                
-            } catch (Exception e) {
-                logger.error("Erreur lors du chargement synchrone: {}", e.getMessage(), e);
-                
-                // Affichage d'un message d'erreur
-                getUI().ifPresent(ui -> ui.access(() -> {
-                    postsContainer.removeAll();
-                    Paragraph errorMsg = new Paragraph("Erreur lors du chargement des articles depuis la base de données. Affichage des données de test.");
-                    errorMsg.getStyle().set("color", "orange").set("font-weight", "bold").set("font-size", "1.2em");
-                    postsContainer.add(errorMsg);
-                    
-                    // Affichage des données de test
-                    postsContainer.add(recentPostsGrid);
-                    afficherArticlesRecents(testPosts);
-                    
-                    // Ajout d'un bouton de retry
-                    Button retryButton = new Button("Réessayer", event -> {
+            // Chargement réel en asynchrone
+            taskExecutor.execute(() -> {
+                try {
+                    List<Post> posts = postPresenter.getAllPostsSync();
+                    logger.info("Chargement asynchrone réussi: {} posts", posts != null ? posts.size() : 0);
+                    getUI().ifPresent(ui -> ui.access(() -> {
                         postsContainer.removeAll();
-                        onAttach(attachEvent);
-                    });
-                    postsContainer.add(retryButton);
-                }));
-            }
+                        postsContainer.add(recentPostsGrid);
+                        afficherArticlesRecents(posts);
+                    }));
+                } catch (Exception e) {
+                    logger.error("Erreur lors du chargement asynchrone: {}", e.getMessage(), e);
+                    getUI().ifPresent(ui -> ui.access(() -> {
+                        postsContainer.removeAll();
+                        Paragraph errorMsg = new Paragraph("Erreur lors du chargement des articles depuis la base de données. Affichage des données de test.");
+                        errorMsg.getStyle().set("color", "orange").set("font-weight", "bold").set("font-size", "1.2em");
+                        postsContainer.add(errorMsg);
+                        postsContainer.add(recentPostsGrid);
+                        afficherArticlesRecents(testPosts);
+                        Button retryButton = new Button("Réessayer", event -> {
+                            postsContainer.removeAll();
+                            onAttach(attachEvent);
+                        });
+                        postsContainer.add(retryButton);
+                    }));
+                }
+            });
         }
     }
 
@@ -239,7 +231,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     private List<Post> createTestPosts() {
         List<Post> testPosts = new ArrayList<>();
-        
+
         Post testPost1 = new Post();
         testPost1.setId(1L);
         testPost1.setTitre("Article de test 1");
@@ -247,7 +239,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         testPost1.setAuteurNom("Admin Test");
         testPost1.setAuteurEmail("admin@test.com");
         testPost1.setDatePublication(java.time.LocalDateTime.now().minusDays(1));
-        
+
         Post testPost2 = new Post();
         testPost2.setId(2L);
         testPost2.setTitre("Article de test 2");
@@ -255,10 +247,10 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         testPost2.setAuteurNom("Utilisateur Test");
         testPost2.setAuteurEmail("user@test.com");
         testPost2.setDatePublication(java.time.LocalDateTime.now().minusHours(6));
-        
+
         testPosts.add(testPost1);
         testPosts.add(testPost2);
-        
+
         return testPosts;
     }
 }

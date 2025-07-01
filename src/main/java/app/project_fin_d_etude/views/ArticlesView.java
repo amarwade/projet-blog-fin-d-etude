@@ -1,14 +1,14 @@
 package app.project_fin_d_etude.views;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
@@ -49,6 +49,8 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
     private final AsyncDataLoader asyncDataLoader;
     private String currentKeyword = null;
     private VerticalLayout loader;
+    @Autowired
+    private Executor taskExecutor;
 
     /**
      * Constructeur de la vue Articles. Les posts sont chargés et affichés
@@ -104,32 +106,37 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
             List<Post> testPosts = createTestPosts();
             getUI().ifPresent(ui -> ui.access(() -> {
                 gridContainer.removeAll();
+                gridContainer.getElement().getChildren().forEach(child -> child.removeFromParent());
                 afficherPosts(testPosts);
             }));
-            // Puis tentative de chargement réel
-            try {
-                logger.info("Test de chargement synchrone");
-                List<Post> posts = postPresenter.getAllPostsSync();
-                logger.info("Chargement synchrone réussi: {} posts", posts != null ? posts.size() : 0);
-                getUI().ifPresent(ui -> ui.access(() -> {
-                    gridContainer.removeAll();
-                    afficherPosts(posts);
-                }));
-            } catch (Exception e) {
-                logger.error("Erreur lors du chargement synchrone: {}", e.getMessage(), e);
-                getUI().ifPresent(ui -> ui.access(() -> {
-                    gridContainer.removeAll();
-                    Paragraph errorMsg = new Paragraph("Erreur lors du chargement des articles depuis la base de données. Affichage des données de test.");
-                    errorMsg.getStyle().set("color", "orange").set("font-weight", "bold").set("font-size", "1.2em");
-                    gridContainer.add(errorMsg);
-                    afficherPosts(testPosts);
-                    Button retryButton = new Button("Réessayer", event -> {
+            // Chargement réel en asynchrone
+            taskExecutor.execute(() -> {
+                try {
+                    List<Post> posts = postPresenter.getAllPostsSync();
+                    logger.info("Chargement asynchrone réussi: {} posts", posts != null ? posts.size() : 0);
+                    getUI().ifPresent(ui -> ui.access(() -> {
                         gridContainer.removeAll();
-                        onAttach(attachEvent);
-                    });
-                    gridContainer.add(retryButton);
-                }));
-            }
+                        gridContainer.getElement().getChildren().forEach(child -> child.removeFromParent());
+                        afficherPosts(posts);
+                    }));
+                } catch (Exception e) {
+                    logger.error("Erreur lors du chargement asynchrone: {}", e.getMessage(), e);
+                    getUI().ifPresent(ui -> ui.access(() -> {
+                        gridContainer.removeAll();
+                        gridContainer.getElement().getChildren().forEach(child -> child.removeFromParent());
+                        Paragraph errorMsg = new Paragraph("Erreur lors du chargement des articles depuis la base de données. Affichage des données de test.");
+                        errorMsg.getStyle().set("color", "orange").set("font-weight", "bold").set("font-size", "1.2em");
+                        gridContainer.add(errorMsg);
+                        afficherPosts(testPosts);
+                        Button retryButton = new Button("Réessayer", event -> {
+                            gridContainer.removeAll();
+                            gridContainer.getElement().getChildren().forEach(child -> child.removeFromParent());
+                            onAttach(attachEvent);
+                        });
+                        gridContainer.add(retryButton);
+                    }));
+                }
+            });
         }
     }
 
@@ -200,21 +207,18 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
 
         Button searchButton = new Button("RECHERCHER", e -> {
             String keyword = searchField.getValue();
-            asyncDataLoader.<List<Post>>loadData(
-                    gridContainer,
-                    () -> postPresenter.searchAllPosts(keyword),
-                    this::afficherPosts,
-                    this::afficherErreur,
-                    UI.getCurrent()
-            );
+            taskExecutor.execute(() -> {
+                List<Post> result = postPresenter.searchAllPosts(keyword);
+                getUI().ifPresent(ui -> ui.access(() -> {
+                    afficherPosts(result);
+                }));
+            });
         });
-        searchButton.addClassName("articles-search-btn");
-        searchButton.getStyle().clear();
+        searchButton.getStyle().set("background", "#6c63ff").set("color", "white");
+        searchButton.getStyle().set("margin-left", "10px");
 
         HorizontalLayout searchBar = new HorizontalLayout(searchField, searchButton);
         searchBar.setAlignItems(Alignment.CENTER);
-        searchBar.setWidth(null);
-        searchBar.getStyle().set("margin-bottom", "0px");
         return searchBar;
     }
 
@@ -225,6 +229,11 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
     @Override
     public void afficherPosts(List<Post> posts) {
         getUI().ifPresent(ui -> ui.access(() -> {
+            // Suppression explicite de tous les overlays/loaders enfants
+            gridContainer.getElement().getChildren()
+                    .filter(child -> child.getClassList().contains("loading-overlay"))
+                    .forEach(child -> child.removeFromParent());
+            gridContainer.setVisible(true);
             gridContainer.removeAll();
             if (posts == null || posts.isEmpty()) {
                 Paragraph emptyMsg = new Paragraph(NO_ARTICLES);
@@ -236,14 +245,10 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
                 );
                 gridContainer.add(emptyMsg);
             } else {
-                for (Post post : posts) {
+                posts.forEach(post -> {
                     BlogPostCard card = new BlogPostCard(post);
-                    card.addClassName("articles-card");
-                    card.setWidth(null);
-                    card.getStyle().clear();
-                    card.getStyle().set("min-width", "260px").set("max-width", "340px");
                     gridContainer.add(card);
-                }
+                });
             }
         }));
     }
@@ -273,8 +278,10 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
 
     @Override
     public void afficherErreur(final String erreur) {
+        System.out.println("[DIAG] afficherErreur appelé avec : " + erreur);
         getUI().ifPresent(ui -> ui.access(() -> {
             gridContainer.removeAll();
+            gridContainer.getElement().getChildren().forEach(child -> child.removeFromParent());
             Paragraph errorMsg = new Paragraph("Erreur : " + erreur);
             errorMsg.getStyle().set("color", "red").set("font-weight", "bold").set("font-size", "1.2em");
             gridContainer.add(errorMsg);

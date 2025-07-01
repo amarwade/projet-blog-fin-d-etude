@@ -1,17 +1,18 @@
 package app.project_fin_d_etude.utils;
 
-import com.vaadin.flow.component.HasComponents;
-import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.Div;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.Executor;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import com.vaadin.flow.component.HasComponents;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.html.Div;
 
 /**
  * Utilitaire pour charger des données de façon asynchrone avec affichage de

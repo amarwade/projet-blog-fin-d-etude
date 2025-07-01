@@ -12,9 +12,8 @@ import org.springframework.stereotype.Component;
 import com.vaadin.flow.component.UI;
 
 import app.project_fin_d_etude.model.Post;
-import app.project_fin_d_etude.service.PostService;
 import app.project_fin_d_etude.service.CommentaireService;
-
+import app.project_fin_d_etude.service.PostService;
 import lombok.Setter;
 
 /**
@@ -75,9 +74,13 @@ public class PostPresenter {
      * Recherche des articles par mot-clé, de façon synchrone (bloquante).
      */
     public List<Post> searchAllPosts(String keyword) {
+        logger.info("[DIAG] Entrée dans PostPresenter.searchAllPosts avec keyword='{}'", keyword);
         try {
-            return postService.searchAllPosts(keyword);
+            List<Post> result = postService.searchAllPosts(keyword);
+            logger.info("[DIAG] Résultat de PostPresenter.searchAllPosts : {} articles trouvés", result != null ? result.size() : 0);
+            return result;
         } catch (Exception e) {
+            logger.error("[DIAG] Exception dans PostPresenter.searchAllPosts : {}", e.getMessage(), e);
             throw new RuntimeException("Erreur lors de la recherche des articles.", e);
         }
     }
