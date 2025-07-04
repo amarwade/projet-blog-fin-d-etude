@@ -15,9 +15,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.presenter.MessagePresenter;
+import app.project_fin_d_etude.utils.ExceptionHandler;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
-import app.project_fin_d_etude.utils.ExceptionHandler;
 
 /**
  * Vue de contact permettant aux utilisateurs d'envoyer des messages. Cette vue
@@ -38,7 +38,6 @@ public class ContactView extends VerticalLayout {
     @Autowired
     public ContactView(MessagePresenter messagePresenter) {
         this.messagePresenter = messagePresenter;
-        add(createIncitationMessage());
         configureLayout();
         add(createMainContent());
     }
@@ -172,10 +171,10 @@ public class ContactView extends VerticalLayout {
     private H3 createIncitationMessage() {
         H3 incitation = new H3("Vous avez une suggestion ou une question ? N'hésitez pas à nous contacter via ce formulaire !");
         incitation.addClassNames(
-            LumoUtility.FontSize.LARGE,
-            LumoUtility.TextColor.PRIMARY,
-            LumoUtility.Margin.Bottom.LARGE,
-            LumoUtility.TextAlignment.CENTER
+                LumoUtility.FontSize.LARGE,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.Margin.Bottom.LARGE,
+                LumoUtility.TextAlignment.CENTER
         );
         return incitation;
     }

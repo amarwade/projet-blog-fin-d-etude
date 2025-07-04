@@ -13,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.repository.PostRepository;
@@ -164,5 +165,20 @@ public class PostService {
         if (size <= 0) {
             throw new IllegalArgumentException("La taille de page doit être positive");
         }
+    }
+
+    /**
+     * Récupère un post par son identifiant et force le chargement des
+     * commentaires.
+     */
+    @Transactional
+    public Optional<Post> getPostWithCommentaires(Long id) {
+        Optional<Post> postOpt = postRepository.findById(id);
+        postOpt.ifPresent(post -> {
+            if (post.getCommentaires() != null) {
+                post.getCommentaires().size(); // Force le chargement
+            }
+        });
+        return postOpt;
     }
 }

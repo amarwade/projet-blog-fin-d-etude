@@ -105,19 +105,37 @@ public class PostPresenter {
      * Charge un article par son identifiant.
      */
     public void chargerPost(Long postId) {
+        logger.info("[DIAG] Appel de chargerPost avec postId={}", postId);
         if (view == null) {
+            logger.warn("[DIAG] La vue est nulle dans chargerPost");
             return;
         }
         PostView currentView = this.view;
+        logger.info("[DIAG] Classe de la vue courante: {}", currentView.getClass().getName());
+        logger.info("[DIAG] UI courante dans chargerPost: {}", UI.getCurrent());
 
         handleAsyncOperation(
-                CompletableFuture.supplyAsync(() -> postService.getPostById(postId)),
+                CompletableFuture.supplyAsync(() -> {
+                    logger.info("[DIAG] Appel de postService.getPostById({})", postId);
+                    var opt = postService.getPostById(postId);
+                    logger.info("[DIAG] Résultat de getPostById: {}", opt.isPresent() ? "trouvé" : "non trouvé");
+                    return opt;
+                }),
                 "Erreur lors du chargement de l'article",
                 optionalPost -> {
-                    if (optionalPost.isPresent()) {
-                        currentView.afficherPost(optionalPost.get());
-                    } else {
-                        currentView.afficherErreur("Article non trouvé");
+                    logger.info("[DIAG] Callback de handleAsyncOperation pour chargerPost, optionalPost présent ? {}", optionalPost.isPresent());
+                    logger.info("[DIAG] Thread courant: {}", Thread.currentThread().getName());
+                    logger.info("[DIAG] UI.getCurrent() dans callback: {}", UI.getCurrent());
+                    try {
+                        logger.info("[DIAG] Avant currentView.afficherPost");
+                        if (optionalPost.isPresent()) {
+                            currentView.afficherPost(optionalPost.get());
+                        } else {
+                            currentView.afficherErreur("Article non trouvé");
+                        }
+                        logger.info("[DIAG] Après currentView.afficherPost");
+                    } catch (Exception e) {
+                        logger.error("[DIAG] Exception dans callback chargerPost : {}", e.getMessage(), e);
                     }
                 }
         );

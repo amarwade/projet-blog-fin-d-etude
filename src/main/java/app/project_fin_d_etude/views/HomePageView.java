@@ -152,7 +152,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     }
 
     private H3 createMainTitle() {
-        final H3 title = new H3("LE BLOG");
+        final H3 title = new H3("ACCUEIL");
         title.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,

@@ -25,9 +25,6 @@ public class CommentaireService {
 
     /**
      * Récupère les commentaires associés à un post de façon asynchrone.
-     *
-     * @param post Le post concerné
-     * @return Future contenant la liste des commentaires
      */
     @Async
     public CompletableFuture<List<Commentaire>> getCommentairesByPost(Post post) {
@@ -38,33 +35,24 @@ public class CommentaireService {
     }
 
     /**
-     * Sauvegarde un commentaire après validation, de façon asynchrone.
-     *
-     * @param commentaire Le commentaire à sauvegarder
-     * @return Future contenant le commentaire sauvegardé
+     * Sauvegarde un commentaire après validation, de façon synchrone.
      */
-    @Async
-    public CompletableFuture<Commentaire> save(Commentaire commentaire) {
+    public Commentaire save(Commentaire commentaire) {
         EntityValidator.ValidationResult validationResult = EntityValidator.validateCommentaire(commentaire);
         if (!validationResult.isValid()) {
             throw new IllegalArgumentException("Commentaire invalide: " + validationResult.getAllErrorsAsString());
         }
-        return CompletableFuture.completedFuture(commentaireRepository.save(commentaire));
+        return commentaireRepository.save(commentaire);
     }
 
     /**
-     * Supprime un commentaire par son identifiant, de façon asynchrone.
-     *
-     * @param id L'identifiant du commentaire
-     * @return Future complétée une fois la suppression effectuée
+     * Supprime un commentaire par son identifiant, de façon synchrone.
      */
-    @Async
-    public CompletableFuture<Void> delete(Long id) {
+    public void delete(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("L'ID du commentaire ne peut pas être null");
         }
         commentaireRepository.deleteById(id);
-        return CompletableFuture.completedFuture(null);
     }
 
     @Async

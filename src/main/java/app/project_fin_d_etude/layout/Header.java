@@ -10,6 +10,8 @@ import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.avatar.Avatar;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 
 import app.project_fin_d_etude.utils.Routes;
 
@@ -42,21 +44,6 @@ public class Header extends HorizontalLayout {
         logoImg.addClassName("header-logo");
         logoUserContainer.add(logoImg);
 
-        if (isAuthenticated) {
-            // Icône SVG user
-            Span userIcon = new Span();
-            userIcon.getElement().setProperty("innerHTML",
-                    "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28' fill='currentColor' viewBox='0 0 24 24'><circle cx='12' cy='8' r='4'/><path d='M12 14c-4.418 0-8 1.79-8 4v2h16v-2c0-2.21-3.582-4-8-4z'/></svg>");
-            userIcon.getStyle().set("cursor", "pointer");
-            userIcon.getStyle().set("margin-left", "10px");
-            userIcon.getStyle().set("margin-right", "6px");
-            userIcon.getElement().setAttribute("title", "Profil utilisateur");
-            userIcon.addClickListener(e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/user/profile")));
-            userIcon.addClassName("header-user-icon");
-            logoUserContainer.add(userIcon);
-        }
-        add(logoUserContainer);
-
         HorizontalLayout navLinks = new HorizontalLayout();
         navLinks.setSpacing(true);
         navLinks.addClassNames(LumoUtility.Gap.MEDIUM);
@@ -69,19 +56,21 @@ public class Header extends HorizontalLayout {
         createNavLink(navLinks, Routes.ABOUT, "A propos");
         createNavLink(navLinks, Routes.CONTACT, "Contact");
 
-        Button actionButton;
+        Button actionButton = null;
+        Avatar avatar = null;
         if (isAuthenticated) {
-            actionButton = new Button("Déconnexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
-            actionButton.addClassNames(
-                    LumoUtility.Background.PRIMARY,
-                    LumoUtility.TextColor.PRIMARY_CONTRAST,
-                    LumoUtility.Padding.Horizontal.MEDIUM,
-                    LumoUtility.Padding.Vertical.SMALL,
-                    LumoUtility.BorderRadius.SMALL
-            );
-            actionButton.getStyle().set("cursor", "pointer");
-            actionButton.getElement().setAttribute("title", "Se déconnecter de votre compte");
-            actionButton.getElement().setAttribute("aria-label", "Se déconnecter de votre compte");
+            OidcUser user = (OidcUser) authentication.getPrincipal();
+            String displayName = user.getFullName() != null ? user.getFullName() : (user.getGivenName() != null ? user.getGivenName() : user.getEmail());
+            String initial = displayName != null && !displayName.isEmpty() ? displayName.substring(0, 1).toUpperCase() : "?";
+            avatar = new Avatar(initial);
+            avatar.setColorIndex(2); // Couleur bleue
+            avatar.getStyle().set("cursor", "pointer").set("margin-left", "10px");
+            avatar.addClassName("header-user-avatar");
+
+            ContextMenu menu = new ContextMenu(avatar);
+            menu.setOpenOnClick(true);
+            menu.addItem("Profil", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/user/profile")));
+            menu.addItem("Déconnexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
         } else {
             actionButton = new Button("Connexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak")));
             actionButton.addClassNames(
@@ -96,10 +85,16 @@ public class Header extends HorizontalLayout {
             actionButton.getElement().setAttribute("aria-label", "Se connecter à votre compte");
         }
 
-        HorizontalLayout buttonsContainer = new HorizontalLayout(actionButton);
+        HorizontalLayout buttonsContainer = new HorizontalLayout();
         buttonsContainer.setSpacing(true);
         buttonsContainer.setAlignItems(Alignment.CENTER);
-
+        if (actionButton != null) {
+            buttonsContainer.add(actionButton);
+        }
+        if (avatar != null) {
+            buttonsContainer.add(avatar);
+        }
+        add(logoUserContainer);
         add(navLinks, buttonsContainer);
 
     }

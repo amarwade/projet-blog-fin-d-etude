@@ -73,6 +73,7 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
      */
     private H1 createPageTitle() {
         H1 pageTitle = new H1("GESTION DES COMMENTAIRES");
+        pageTitle.addClassName("main-title");
         pageTitle.addClassName("admin-commentaires-title");
         pageTitle.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,

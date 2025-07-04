@@ -55,66 +55,57 @@ public class KeycloakUserAdminService {
     }
 
     /**
-     * Ajoute un utilisateur Keycloak (avec mot de passe).
+     * Ajoute un utilisateur Keycloak (avec mot de passe), de façon synchrone.
      */
-    @Async
-    public CompletableFuture<String> createUser(String username, String email, String password, boolean enabled) {
-        return CompletableFuture.supplyAsync(() -> {
-            UserRepresentation user = new UserRepresentation();
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setEnabled(enabled);
-            user.setEmailVerified(true);
+    public String createUser(String username, String email, String password, boolean enabled) {
+        UserRepresentation user = new UserRepresentation();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setEnabled(enabled);
+        user.setEmailVerified(true);
 
-            CredentialRepresentation cred = new CredentialRepresentation();
-            cred.setTemporary(false);
-            cred.setType(CredentialRepresentation.PASSWORD);
-            cred.setValue(password);
-            user.setCredentials(List.of(cred));
+        CredentialRepresentation cred = new CredentialRepresentation();
+        cred.setTemporary(false);
+        cred.setType(CredentialRepresentation.PASSWORD);
+        cred.setValue(password);
+        user.setCredentials(List.of(cred));
 
-            Response response = realmResource().users().create(user);
-            if (response.getStatus() == 201) {
-                return CreatedResponseUtil.getCreatedId(response);
-            } else {
-                throw new RuntimeException("Erreur lors de la création de l'utilisateur : " + response.getStatusInfo().getReasonPhrase());
-            }
-        });
+        Response response = realmResource().users().create(user);
+        if (response.getStatus() == 201) {
+            return CreatedResponseUtil.getCreatedId(response);
+        } else {
+            throw new RuntimeException("Erreur lors de la création de l'utilisateur : " + response.getStatusInfo().getReasonPhrase());
+        }
     }
 
     /**
-     * Modifie un utilisateur Keycloak (nom, email, activation...)
+     * Modifie un utilisateur Keycloak (nom, email, activation...), de façon
+     * synchrone.
      */
-    @Async
-    public CompletableFuture<Void> updateUser(String userId, String username, String email, boolean enabled) {
-        return CompletableFuture.runAsync(() -> {
-            UserRepresentation user = realmResource().users().get(userId).toRepresentation();
-            user.setUsername(username);
-            user.setEmail(email);
-            user.setEnabled(enabled);
-            realmResource().users().get(userId).update(user);
-        });
+    public void updateUser(String userId, String username, String email, boolean enabled) {
+        UserRepresentation user = realmResource().users().get(userId).toRepresentation();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setEnabled(enabled);
+        realmResource().users().get(userId).update(user);
     }
 
     /**
-     * Modifie le mot de passe d'un utilisateur Keycloak.
+     * Modifie le mot de passe d'un utilisateur Keycloak, de façon synchrone.
      */
-    @Async
-    public CompletableFuture<Void> updatePassword(String userId, String newPassword) {
-        return CompletableFuture.runAsync(() -> {
-            CredentialRepresentation cred = new CredentialRepresentation();
-            cred.setTemporary(false);
-            cred.setType(CredentialRepresentation.PASSWORD);
-            cred.setValue(newPassword);
-            realmResource().users().get(userId).resetPassword(cred);
-        });
+    public void updatePassword(String userId, String newPassword) {
+        CredentialRepresentation cred = new CredentialRepresentation();
+        cred.setTemporary(false);
+        cred.setType(CredentialRepresentation.PASSWORD);
+        cred.setValue(newPassword);
+        realmResource().users().get(userId).resetPassword(cred);
     }
 
     /**
-     * Supprime un utilisateur Keycloak.
+     * Supprime un utilisateur Keycloak, de façon synchrone.
      */
-    @Async
-    public CompletableFuture<Void> deleteUser(String userId) {
-        return CompletableFuture.runAsync(() -> realmResource().users().get(userId).remove());
+    public void deleteUser(String userId) {
+        realmResource().users().get(userId).remove();
     }
 
     /**

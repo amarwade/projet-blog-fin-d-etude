@@ -64,7 +64,6 @@ public class ProfileView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.START);
         addClassNames(LumoUtility.Padding.LARGE, LumoUtility.Background.CONTRAST_5, "profile-view");
-        getStyle().remove("padding-top");
 
         add(createMainSection());
         content = createProfileContent();

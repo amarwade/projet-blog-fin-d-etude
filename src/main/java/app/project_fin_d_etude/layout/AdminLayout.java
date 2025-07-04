@@ -4,6 +4,7 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -14,13 +15,9 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Display;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontSize;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontWeight;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
-import com.vaadin.flow.theme.lumo.LumoUtility.IconSize;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
-import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
 
 import app.project_fin_d_etude.config.AppRoles;
 import jakarta.annotation.security.PermitAll;
@@ -48,14 +45,13 @@ public class AdminLayout extends AppLayout {
 
     // Crée l'en-tête du layout avec le logo et le nom de l'application
     private Div createHeader() {
-        Icon appLogo = VaadinIcon.CUBES.create(); // Logo de l'application
-        appLogo.addClassNames(TextColor.PRIMARY, IconSize.LARGE);
 
-        Span appName = new Span("Mon Application"); // Nom de l'application
-        appName.addClassNames(FontWeight.SEMIBOLD, FontSize.LARGE);
+        Image logo = new Image("themes/project-fin-d-etude/logo1.png", "Logo"); // Logo personnalisé
+        logo.setHeight("40px"); // Ajustez la taille si besoin
 
-        Div header = new Div(appLogo, appName);
+        Div header = new Div(logo);
         header.addClassNames(Display.FLEX, Padding.MEDIUM, Gap.MEDIUM, AlignItems.CENTER);
+        header.getStyle().set("justify-content", "center"); // Centre le logo horizontalement
         return header;
     }
 
