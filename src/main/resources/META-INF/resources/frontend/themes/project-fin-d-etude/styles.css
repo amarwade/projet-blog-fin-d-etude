@@ -713,12 +713,29 @@ h1,
     color: #fff;
 }
 
+
 /* Limite l'indentation à 3 niveaux visuellement */
-.level-0 { margin-left: 0 !important; }
-.level-1 { margin-left: 0px !important; }
-.level-2 { margin-left: 0px !important; }
-.level-3, .level-4, .level-5, .level-6, .level-7, .level-8, .level-9, .level-10 {
-  margin-left: 96px !important;
+.level-0 {
+    margin-left: 0 !important;
+}
+
+.level-1 {
+    margin-left: 0% !important;
+}
+
+.level-2 {
+    margin-left: 0px !important;
+}
+
+.level-3,
+.level-4,
+.level-5,
+.level-6,
+.level-7,
+.level-8,
+.level-9,
+.level-10 {
+    margin-left: 0px !important;
 }
 
 .post-detail-comment-bubble {
@@ -729,9 +746,22 @@ h1,
 }
 
 @media (max-width: 800px) {
-  .level-1 { margin-left: 0px !important; }
-  .level-2 { margin-left: 0px !important; }
-  .level-3, .level-4, .level-5, .level-6, .level-7, .level-8, .level-9, .level-10 {
-    margin-left: 0px !important;
-  }
+    .level-1 {
+        margin-left: 0px !important;
+    }
+
+    .level-2 {
+        margin-left: 0px !important;
+    }
+
+    .level-3,
+    .level-4,
+    .level-5,
+    .level-6,
+    .level-7,
+    .level-8,
+    .level-9,
+    .level-10 {
+        margin-left: 0px !important;
+    }
 }
