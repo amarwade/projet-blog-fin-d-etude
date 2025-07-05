@@ -224,6 +224,20 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         auteurDate.addClassName("post-detail-comment-author-date");
         auteurDate.setAlignItems(Alignment.CENTER);
 
+        // Badge inapproprié si besoin
+        if (commentaire.isInapproprie()) {
+            Span badge = new Span("Inapproprié");
+            badge.getStyle()
+                    .set("background", "#ffebee")
+                    .set("color", "#b71c1c")
+                    .set("padding", "2px 10px")
+                    .set("border-radius", "10px")
+                    .set("font-size", "0.9em")
+                    .set("font-weight", "bold")
+                    .set("margin-left", "10px");
+            auteurDate.add(badge);
+        }
+
         Paragraph contenu = new Paragraph(commentaire.getContenu());
         contenu.addClassName("post-detail-comment-content");
 

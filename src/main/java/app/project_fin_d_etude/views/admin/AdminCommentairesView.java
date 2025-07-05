@@ -136,25 +136,37 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
                 .setWidth("50px")
                 .setFlexGrow(0);
 
-        grid.addColumn(Commentaire::isInapproprie)
-                .setHeader("Inapproprié")
-                .setAutoWidth(true);
+        grid.addComponentColumn(commentaire -> {
+            boolean inapproprie = commentaire.isInapproprie();
+            Span badge = new Span(String.valueOf(inapproprie));
+            if (inapproprie) {
+                badge.getStyle().set("background", "#e6f4ea")
+                        .set("color", "#1b5e20")
+                        .set("padding", "4px 12px")
+                        .set("border-radius", "12px")
+                        .set("font-weight", "bold");
+            } else {
+                badge.getStyle().set("background", "#ffebee")
+                        .set("color", "#b71c1c")
+                        .set("padding", "4px 12px")
+                        .set("border-radius", "12px")
+                        .set("font-weight", "bold");
+            }
+            return badge;
+        }).setHeader("Inapproprié");
 
         grid.addComponentColumn(commentaire -> {
-            Button inapproprieBtn = new Button(
-                    commentaire.isInapproprie() ? "Rendre approprié" : "Marquer inapproprié"
+            Button actionBtn = new Button(
+                    commentaire.isInapproprie() ? "Rendre approprié" : "Marquer inapproprié",
+                    e -> {
+                        commentaire.setInapproprie(!commentaire.isInapproprie());
+                        commentairePresenter.modifier(commentaire);
+                        grid.getDataProvider().refreshItem(commentaire);
+                        grid.getDataProvider().refreshAll();
+                    }
             );
-            inapproprieBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
-            inapproprieBtn.addClassName("admin-commentaires-btn");
-
-            inapproprieBtn.addClickListener(e -> {
-                commentaire.setInapproprie(!commentaire.isInapproprie());
-                commentairePresenter.modifier(commentaire);
-                grid.getDataProvider().refreshItem(commentaire);
-                grid.getDataProvider().refreshAll();
-            });
-
-            return inapproprieBtn;
+            actionBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            return actionBtn;
         }).setHeader("Modération");
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
