@@ -4,23 +4,20 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.Scroller;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.Layout;
 import com.vaadin.flow.theme.lumo.LumoUtility.AlignItems;
 import com.vaadin.flow.theme.lumo.LumoUtility.Display;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontSize;
-import com.vaadin.flow.theme.lumo.LumoUtility.FontWeight;
 import com.vaadin.flow.theme.lumo.LumoUtility.Gap;
-import com.vaadin.flow.theme.lumo.LumoUtility.IconSize;
 import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 import com.vaadin.flow.theme.lumo.LumoUtility.Padding;
-import com.vaadin.flow.theme.lumo.LumoUtility.TextColor;
 
 import app.project_fin_d_etude.config.AppRoles;
 import jakarta.annotation.security.PermitAll;
@@ -28,7 +25,6 @@ import jakarta.annotation.security.RolesAllowed;
 
 // Classe de layout principal pour l'administration, accessible uniquement aux administrateurs
 @Layout
-@PermitAll // Lorsque la sécurité est activée, permet à tous les utilisateurs authentifiés
 @RolesAllowed(AppRoles.ADMIN) // Restreint l'accès aux utilisateurs ayant le rôle ADMIN
 public class AdminLayout extends AppLayout {
 
@@ -37,21 +33,24 @@ public class AdminLayout extends AppLayout {
         setPrimarySection(Section.DRAWER); // Définit la section principale comme le menu latéral
         Div header = createHeader(); // Crée l'en-tête
         Div spacer = new Div(); // Espaceur pour l'esthétique
-        spacer.getStyle().set("height", "32px");
-        // Ajoute l'en-tête, l'espaceur, le menu latéral et le menu utilisateur au drawer
-        addToDrawer(header, spacer, new Scroller(createSideNav()), createUserMenu());
+        spacer.getStyle().set("height", "0px");
+        // Ajoute l'en-tête, l'espaceur, le menu latéral et le menu utilisateur dans un HorizontalLayout
+        VerticalLayout layout = new VerticalLayout(header, spacer, createSideNav(), createUserMenu());
+        layout.setWidthFull();
+        layout.addClassName("admin-layout");
+        layout.setAlignItems(HorizontalLayout.Alignment.START);
+        addToDrawer(layout);
     }
 
     // Crée l'en-tête du layout avec le logo et le nom de l'application
     private Div createHeader() {
-        Icon appLogo = VaadinIcon.CUBES.create(); // Logo de l'application
-        appLogo.addClassNames(TextColor.PRIMARY, IconSize.LARGE);
 
-        Span appName = new Span("Mon Application"); // Nom de l'application
-        appName.addClassNames(FontWeight.SEMIBOLD, FontSize.LARGE);
+        Image logo = new Image("themes/project-fin-d-etude/logo1.png", "Logo"); // Logo personnalisé
+        logo.setHeight("40px"); // Ajustez la taille si besoin
 
-        Div header = new Div(appLogo, appName);
+        Div header = new Div(logo);
         header.addClassNames(Display.FLEX, Padding.MEDIUM, Gap.MEDIUM, AlignItems.CENTER);
+        header.getStyle().set("justify-content", "center"); // Centre le logo horizontalement
         return header;
     }
 
@@ -78,7 +77,8 @@ public class AdminLayout extends AppLayout {
         nav.addItem(createNavItem("A propos", VaadinIcon.INFO_CIRCLE.create(), "/about"));
         nav.addItem(createNavItem("Contact", VaadinIcon.PHONE.create(), "/contact"));
         nav.addItem(createNavItem("Profil", VaadinIcon.USER.create(), "/user/profile"));
-        nav.addItem(createNavItem("Gestion des articles", VaadinIcon.EDIT.create(), "/admin/dashboard"));
+        nav.addItem(createNavItem("Tableau de bord", VaadinIcon.DASHBOARD.create(), "/admin/dashboard"));
+        nav.addItem(createNavItem("Gestion des articles", VaadinIcon.EDIT.create(), "/admin/articles"));
         nav.addItem(createNavItem("Gestion des utilisateurs", VaadinIcon.USERS.create(), "/admin/keycloak-users"));
         nav.addItem(createNavItem("Gestion des commentaires", VaadinIcon.COMMENT.create(), "/admin/commentaires"));
         nav.addItem(createNavItem("Listes des messages", VaadinIcon.ENVELOPE.create(), "/admin/messages"));

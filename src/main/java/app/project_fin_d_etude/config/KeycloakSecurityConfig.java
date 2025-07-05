@@ -23,7 +23,7 @@ public class KeycloakSecurityConfig {
     private static final String[] STATIC_RESOURCES = {
         "/VAADIN/**", "/HEARTBEAT/**", "/UIDL/**", "/PUSH/**",
         "/css/**", "/js/**", "/images/**",
-        "/", "/about", "/contact"
+        "/", "/about", "/contact", "/api/**", "/themes/**"
     };
     private static final String LOGIN_PAGE = "/oauth2/authorization/keycloak";
     private static final String DEFAULT_SUCCESS_URL = "/";

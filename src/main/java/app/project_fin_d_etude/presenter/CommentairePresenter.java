@@ -71,18 +71,17 @@ public class CommentairePresenter {
         }
         final CommentaireView currentView = this.view;
         final UI ui = UI.getCurrent();
-
-        commentaireService.save(commentaire)
-                .whenComplete((savedCommentaire, ex) -> {
-                    ui.access(() -> {
-                        if (ex != null) {
-                            currentView.afficherErreur("Erreur lors de l'ajout du commentaire : " + ex.getMessage());
-                        } else {
-                            currentView.afficherMessage("Commentaire ajouté avec succès");
-                            currentView.rafraichirListe();
-                        }
-                    });
-                });
+        try {
+            commentaireService.save(commentaire);
+            ui.access(() -> {
+                currentView.afficherMessage("Commentaire ajouté avec succès");
+                currentView.rafraichirListe();
+            });
+        } catch (Exception ex) {
+            ui.access(() -> {
+                currentView.afficherErreur("Erreur lors de l'ajout du commentaire : " + ex.getMessage());
+            });
+        }
     }
 
     /*
@@ -97,18 +96,17 @@ public class CommentairePresenter {
         }
         final CommentaireView currentView = this.view;
         final UI ui = UI.getCurrent();
-
-        commentaireService.delete(commentaire.getId())
-                .whenComplete((unused, ex) -> {
-                    ui.access(() -> {
-                        if (ex != null) {
-                            currentView.afficherErreur("Erreur lors de la suppression du commentaire : " + ex.getMessage());
-                        } else {
-                            currentView.afficherMessage("Commentaire supprimé avec succès");
-                            currentView.rafraichirListe();
-                        }
-                    });
-                });
+        try {
+            commentaireService.delete(commentaire.getId());
+            ui.access(() -> {
+                currentView.afficherMessage("Commentaire supprimé avec succès");
+                currentView.rafraichirListe();
+            });
+        } catch (Exception ex) {
+            ui.access(() -> {
+                currentView.afficherErreur("Erreur lors de la suppression du commentaire : " + ex.getMessage());
+            });
+        }
     }
 
     /**
@@ -124,18 +122,17 @@ public class CommentairePresenter {
         }
         final CommentaireView currentView = this.view;
         final UI ui = UI.getCurrent();
-
-        commentaireService.save(commentaire)
-                .whenComplete((savedCommentaire, ex) -> {
-                    ui.access(() -> {
-                        if (ex != null) {
-                            currentView.afficherErreur("Erreur lors de la modification du commentaire : " + ex.getMessage());
-                        } else {
-                            currentView.afficherMessage("Commentaire modifié avec succès");
-                            currentView.rafraichirListe();
-                        }
-                    });
-                });
+        try {
+            commentaireService.save(commentaire);
+            ui.access(() -> {
+                currentView.afficherMessage("Commentaire modifié avec succès");
+                currentView.rafraichirListe();
+            });
+        } catch (Exception ex) {
+            ui.access(() -> {
+                currentView.afficherErreur("Erreur lors de la modification du commentaire : " + ex.getMessage());
+            });
+        }
     }
 
     public void chargerTousLesCommentaires() {

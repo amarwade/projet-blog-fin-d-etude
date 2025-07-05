@@ -2,6 +2,7 @@ package app.project_fin_d_etude.model;
 
 import java.time.LocalDateTime;
 import java.io.Serializable;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,6 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -64,4 +66,10 @@ public class Commentaire implements Serializable {
      */
     @Column(nullable = false)
     private boolean inapproprie = false;
+
+    @ManyToOne
+    private Commentaire parent;
+
+    @OneToMany(mappedBy = "parent")
+    private List<Commentaire> replies;
 }

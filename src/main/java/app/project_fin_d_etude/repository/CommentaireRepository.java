@@ -18,4 +18,12 @@ public interface CommentaireRepository extends JpaRepository<Commentaire, Long> 
      * @return Liste des commentaires du post
      */
     List<Commentaire> findByPost(Post post);
+
+    /**
+     * Récupère la liste des réponses à un commentaire donné.
+     *
+     * @param parent Le commentaire parent
+     * @return Liste des réponses au commentaire
+     */
+    List<Commentaire> findByParent(Commentaire parent);
 }
