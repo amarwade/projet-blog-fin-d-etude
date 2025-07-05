@@ -361,6 +361,7 @@ vaadin-side-nav-item:hover {
     word-break: break-word;
     white-space: pre-line;
     overflow-wrap: anywhere;
+    border-left: 4px solid #1976d2;
 }
 
 /* Bulle enfant (réponse) */
