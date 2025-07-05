@@ -88,7 +88,7 @@ vaadin-side-nav-item:hover {
 }
 
 .admin-layout {
-    background: linear-gradient(135deg, #2563eb 0%, #1e293b 100%) !important;
+    background: linear-gradient(135deg, #b7b9be 0%, #687588 100%) !important;
     color: #fff !important;
     min-height: 100vh;
     border: none;

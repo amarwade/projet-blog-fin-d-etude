@@ -24,7 +24,7 @@ import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import jakarta.annotation.security.RolesAllowed;
 
-@Route(value = "admin/dashboard", layout = AdminLayout.class)
+@Route(value = "admin/articles", layout = AdminLayout.class)
 @PageTitle("Gestion des articles - Administration")
 @RolesAllowed("ADMIN")
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {

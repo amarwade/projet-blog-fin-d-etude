@@ -92,7 +92,7 @@ public class AdminKeycloakUsersView extends VerticalLayout {
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
         contentSection.setWidth("100%");
-        contentSection.setHeight("600px");
+        contentSection.setHeight("500px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,

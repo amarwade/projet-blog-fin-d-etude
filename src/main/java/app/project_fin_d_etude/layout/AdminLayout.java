@@ -25,7 +25,6 @@ import jakarta.annotation.security.RolesAllowed;
 
 // Classe de layout principal pour l'administration, accessible uniquement aux administrateurs
 @Layout
-@PermitAll // Lorsque la sécurité est activée, permet à tous les utilisateurs authentifiés
 @RolesAllowed(AppRoles.ADMIN) // Restreint l'accès aux utilisateurs ayant le rôle ADMIN
 public class AdminLayout extends AppLayout {
 
@@ -78,7 +77,8 @@ public class AdminLayout extends AppLayout {
         nav.addItem(createNavItem("A propos", VaadinIcon.INFO_CIRCLE.create(), "/about"));
         nav.addItem(createNavItem("Contact", VaadinIcon.PHONE.create(), "/contact"));
         nav.addItem(createNavItem("Profil", VaadinIcon.USER.create(), "/user/profile"));
-        nav.addItem(createNavItem("Gestion des articles", VaadinIcon.EDIT.create(), "/admin/dashboard"));
+        nav.addItem(createNavItem("Tableau de bord", VaadinIcon.DASHBOARD.create(), "/admin/dashboard"));
+        nav.addItem(createNavItem("Gestion des articles", VaadinIcon.EDIT.create(), "/admin/articles"));
         nav.addItem(createNavItem("Gestion des utilisateurs", VaadinIcon.USERS.create(), "/admin/keycloak-users"));
         nav.addItem(createNavItem("Gestion des commentaires", VaadinIcon.COMMENT.create(), "/admin/commentaires"));
         nav.addItem(createNavItem("Listes des messages", VaadinIcon.ENVELOPE.create(), "/admin/messages"));
