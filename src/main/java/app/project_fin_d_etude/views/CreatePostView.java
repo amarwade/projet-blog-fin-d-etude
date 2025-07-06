@@ -23,6 +23,7 @@ import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.SecurityUtils;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
+import jakarta.annotation.security.RolesAllowed;
 
 import java.util.List;
 
@@ -31,6 +32,7 @@ import java.util.List;
  */
 @Route(value = "user/create-post", layout = MainLayout.class)
 @PageTitle("Créer un post")
+@RolesAllowed("USER")
 public class CreatePostView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;

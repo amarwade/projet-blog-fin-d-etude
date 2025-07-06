@@ -20,14 +20,14 @@ import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.presenter.CommentairePresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Vue d'administration des commentaires : affichage automatique et gestion.
  */
 @Route(value = "admin/commentaires", layout = AdminLayout.class)
 @PageTitle("Gestion des commentaires - Administration")
-@RolesAllowed("ADMIN")
+@Secured("OIDC_ADMIN")
 public class AdminCommentairesView extends VerticalLayout implements CommentairePresenter.CommentaireView {
 
     private final CommentairePresenter commentairePresenter;

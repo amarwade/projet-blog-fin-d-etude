@@ -16,6 +16,7 @@ public final class Routes {
     public static final String ARTICLES = "/articles";
     public static final String ABOUT = "/about";
     public static final String CONTACT = "/contact";
+    public static final String LOGIN = "/login";
 
     // Routes utilisateur
     public static final String USER_PROFILE = "/user/profile";
@@ -24,7 +25,6 @@ public final class Routes {
     public static final String USER_ARTICLE = "/user/article";
 
     // Routes d'authentification
-    public static final String LOGIN = "/login";
     public static final String LOGOUT = "/logout";
 
     // Routes d'administration
@@ -154,6 +154,7 @@ public final class Routes {
                 || ARTICLES.equals(route)
                 || ABOUT.equals(route)
                 || CONTACT.equals(route)
+                || LOGIN.equals(route)
                 || route.startsWith(ARTICLES + "/");
     }
 

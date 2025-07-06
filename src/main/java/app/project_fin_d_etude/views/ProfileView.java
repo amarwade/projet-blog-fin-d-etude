@@ -37,7 +37,6 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "user/profile", layout = MainLayout.class)
 @PageTitle("Mon Profil")
-@AnonymousAllowed
 public class ProfileView extends VerticalLayout {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileView.class);

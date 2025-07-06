@@ -26,14 +26,11 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.service.KeycloakUserAdminService;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.access.annotation.Secured;
 
-/**
- * Vue d'administration des utilisateurs Keycloak : CRUD complet.
- */
 @Route(value = "admin/keycloak-users", layout = AdminLayout.class)
 @PageTitle("Gestion des utilisateurs Keycloak - Administration")
-@RolesAllowed("ADMIN")
+@Secured("OIDC_ADMIN")
 public class AdminKeycloakUsersView extends VerticalLayout {
 
     private final KeycloakUserAdminService keycloakUserAdminService;

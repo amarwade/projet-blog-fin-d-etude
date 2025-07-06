@@ -10,6 +10,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.MainLayout;
@@ -25,6 +26,7 @@ import app.project_fin_d_etude.utils.ValidationUtils;
  */
 @Route(value = "contact", layout = MainLayout.class)
 @PageTitle("Contact")
+@AnonymousAllowed
 public class ContactView extends VerticalLayout {
 
     private static final String SUCCESS_MESSAGE = "Message envoyé avec succès !";

@@ -6,7 +6,6 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.AdminLayout;
-import jakarta.annotation.security.RolesAllowed;
 import app.project_fin_d_etude.service.KeycloakUserAdminService;
 import app.project_fin_d_etude.service.PostService;
 import app.project_fin_d_etude.service.CommentaireService;
@@ -16,10 +15,11 @@ import com.vaadin.flow.component.html.Span;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import org.springframework.security.access.annotation.Secured;
 
 @Route(value = "admin/dashboard", layout = AdminLayout.class)
 @PageTitle("Tableau de bord administrateur")
-@RolesAllowed("ADMIN")
+@Secured("OIDC_ADMIN")
 public class DashboardAdminView extends VerticalLayout {
 
     @Autowired

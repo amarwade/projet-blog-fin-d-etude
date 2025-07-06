@@ -22,11 +22,11 @@ import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import jakarta.annotation.security.RolesAllowed;
-
+import org.springframework.security.access.annotation.Secured;
 @Route(value = "admin/articles", layout = AdminLayout.class)
+
 @PageTitle("Gestion des articles - Administration")
-@RolesAllowed("ADMIN")
+@Secured("OIDC_ADMIN")
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
@@ -48,7 +48,7 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         VaadinUtils.showLoading(this);
         postPresenter.chargerPosts();
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+        System.out.println("Authorities: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
     }
 
     private VerticalLayout createMainContent() {

@@ -13,6 +13,9 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
 import app.project_fin_d_etude.model.Post;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 public class BlogPostCard extends Div {
 
@@ -89,7 +92,13 @@ public class BlogPostCard extends Div {
         Button button = new Button(READ_MORE);
         button.addClickListener(e -> {
             button.setEnabled(false); // Désactive le bouton après clic
-            getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId()));
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
+            if (!isAuthenticated) {
+                getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak"));
+            } else {
+                getUI().ifPresent(ui -> ui.navigate("/user/article/" + post.getId()));
+            }
         });
         button.addClassName(BUTTON_CLASS);
         button.getElement().setAttribute("aria-label", READ_MORE + " sur " + post.getTitre());

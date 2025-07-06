@@ -32,6 +32,8 @@ import app.project_fin_d_etude.utils.VaadinUtils;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Vue de détail d'un article : affiche le contenu de l'article et ses
@@ -39,6 +41,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
  */
 @Route(value = "user/article", layout = MainLayout.class)
 @PageTitle("Détail de l'article")
+@Secured("OIDC_USER")
 public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private final PostService postService;
@@ -52,6 +55,8 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         this.postService = postService;
         this.commentaireService = commentaireService;
         add(createMainSection());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        System.out.println("Authorities: " + authentication.getAuthorities());
     }
 
     private VerticalLayout createMainSection() {

@@ -9,6 +9,9 @@ import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.button.Button;
@@ -21,6 +24,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.server.VaadinSession;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
@@ -205,6 +209,13 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     @Override
     public void redirigerVersDetail(Long postId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
+        if (!isAuthenticated) {
+            getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak"));
+        } else {
+            getUI().ifPresent(ui -> ui.navigate("/user/article/" + postId));
+        }
     }
 
     @Override

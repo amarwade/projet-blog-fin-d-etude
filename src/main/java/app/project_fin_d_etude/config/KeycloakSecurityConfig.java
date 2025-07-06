@@ -22,12 +22,14 @@ public class KeycloakSecurityConfig {
     // Constantes pour les chemins et URLs
     private static final String[] STATIC_RESOURCES = {
         "/VAADIN/**", "/HEARTBEAT/**", "/UIDL/**", "/PUSH/**",
-        "/css/**", "/js/**", "/images/**",
-        "/", "/about", "/contact", "/api/**", "/themes/**"
+        "/css/**", "/js/**", "/images/**", "/themes/**"
     };
-    private static final String LOGIN_PAGE = "/oauth2/authorization/keycloak";
+    private static final String[] PUBLIC_ROUTES = {
+        "/", "/articles", "/about", "/contact", "/login"
+    };
+    private static final String LOGIN_PAGE = "/login";
     private static final String DEFAULT_SUCCESS_URL = "/";
-    private static final String LOGOUT_SUCCESS_URL = "/?logout";
+    private static final String LOGOUT_SUCCESS_URL = "/login?logout";
     private static final String COOKIE_JSESSIONID = "JSESSIONID";
 
     /**
@@ -66,6 +68,7 @@ public class KeycloakSecurityConfig {
                 // Autorisation des requêtes
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(STATIC_RESOURCES).permitAll()
+                .requestMatchers(PUBLIC_ROUTES).permitAll()
                 .anyRequest().authenticated()
                 )
                 // Configuration OAuth2 (Keycloak)
@@ -79,6 +82,11 @@ public class KeycloakSecurityConfig {
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
                 .deleteCookies(COOKIE_JSESSIONID)
+                )
+                // Gestion des erreurs d'accès
+                .exceptionHandling(exception -> exception
+                    .authenticationEntryPoint((request, response, authException) -> response.sendRedirect("/login"))
+                    .accessDeniedPage("/login")
                 );
 
         return http.build();
