@@ -1,16 +1,18 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.vaadin.flow.component.UI;
 
 import app.project_fin_d_etude.model.Post;
+import app.project_fin_d_etude.service.CommentaireService;
 import app.project_fin_d_etude.service.PostService;
 import lombok.Setter;
 
@@ -20,14 +22,18 @@ import lombok.Setter;
 @Component
 public class PostPresenter {
 
+    private static final Logger logger = LoggerFactory.getLogger(PostPresenter.class);
+
     @Setter
     private PostView view;
 
     private final PostService postService;
+    private final CommentaireService commentaireService;
 
     @Autowired
-    public PostPresenter(PostService postService) {
+    public PostPresenter(PostService postService, CommentaireService commentaireService) {
         this.postService = postService;
+        this.commentaireService = commentaireService;
     }
 
     /**
@@ -52,10 +58,15 @@ public class PostPresenter {
      * Récupère tous les posts de façon synchrone (bloquante).
      */
     public List<Post> getAllPostsSync() {
+        logger.info("Début de getAllPostsSync");
         try {
-            return postService.getAllPosts();
+            logger.info("Appel de postService.getAllPosts()");
+            List<Post> posts = postService.getAllPosts();
+            logger.info("Posts récupérés avec succès: {} articles", posts != null ? posts.size() : 0);
+            return posts;
         } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la récupération des articles.", e);
+            logger.error("Erreur lors de la récupération des articles: {}", e.getMessage(), e);
+            throw new RuntimeException("Une erreur est survenue lors de la récupération des articles.");
         }
     }
 
@@ -63,10 +74,14 @@ public class PostPresenter {
      * Recherche des articles par mot-clé, de façon synchrone (bloquante).
      */
     public List<Post> searchAllPosts(String keyword) {
+        logger.info("[DIAG] Entrée dans PostPresenter.searchAllPosts avec keyword='{}'", keyword);
         try {
-            return postService.searchAllPosts(keyword);
+            List<Post> result = postService.searchAllPosts(keyword);
+            logger.info("[DIAG] Résultat de PostPresenter.searchAllPosts : {} articles trouvés", result != null ? result.size() : 0);
+            return result;
         } catch (Exception e) {
-            throw new RuntimeException("Erreur lors de la recherche des articles.", e);
+            logger.error("[DIAG] Exception dans PostPresenter.searchAllPosts : {}", e.getMessage(), e);
+            throw new RuntimeException("Une erreur est survenue lors de la recherche des articles.");
         }
     }
 
@@ -90,19 +105,37 @@ public class PostPresenter {
      * Charge un article par son identifiant.
      */
     public void chargerPost(Long postId) {
+        logger.info("[DIAG] Appel de chargerPost avec postId={}", postId);
         if (view == null) {
+            logger.warn("[DIAG] La vue est nulle dans chargerPost");
             return;
         }
         PostView currentView = this.view;
+        logger.info("[DIAG] Classe de la vue courante: {}", currentView.getClass().getName());
+        logger.info("[DIAG] UI courante dans chargerPost: {}", UI.getCurrent());
 
         handleAsyncOperation(
-                CompletableFuture.supplyAsync(() -> postService.getPostById(postId)),
+                CompletableFuture.supplyAsync(() -> {
+                    logger.info("[DIAG] Appel de postService.getPostById({})", postId);
+                    var opt = postService.getPostById(postId);
+                    logger.info("[DIAG] Résultat de getPostById: {}", opt.isPresent() ? "trouvé" : "non trouvé");
+                    return opt;
+                }),
                 "Erreur lors du chargement de l'article",
                 optionalPost -> {
-                    if (optionalPost.isPresent()) {
-                        currentView.afficherPost(optionalPost.get());
-                    } else {
-                        currentView.afficherErreur("Article non trouvé");
+                    logger.info("[DIAG] Callback de handleAsyncOperation pour chargerPost, optionalPost présent ? {}", optionalPost.isPresent());
+                    logger.info("[DIAG] Thread courant: {}", Thread.currentThread().getName());
+                    logger.info("[DIAG] UI.getCurrent() dans callback: {}", UI.getCurrent());
+                    try {
+                        logger.info("[DIAG] Avant currentView.afficherPost");
+                        if (optionalPost.isPresent()) {
+                            currentView.afficherPost(optionalPost.get());
+                        } else {
+                            currentView.afficherErreur("Article non trouvé");
+                        }
+                        logger.info("[DIAG] Après currentView.afficherPost");
+                    } catch (Exception e) {
+                        logger.error("[DIAG] Exception dans callback chargerPost : {}", e.getMessage(), e);
                     }
                 }
         );
@@ -231,4 +264,10 @@ public class PostPresenter {
             });
         });
     }
+
+    public void repondreAuCommentaire(Long postId, Long parentCommentaireId, String contenu, String auteurNom, String auteurEmail) {
+        System.out.println(">>> Presenter: repondreAuCommentaire appelé");
+        commentaireService.repondreAuCommentaire(postId, parentCommentaireId, contenu, auteurNom, auteurEmail);
+    }
+
 }

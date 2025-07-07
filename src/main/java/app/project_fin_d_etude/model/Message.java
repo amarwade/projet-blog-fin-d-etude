@@ -1,10 +1,17 @@
 package app.project_fin_d_etude.model;
 
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
@@ -47,11 +54,18 @@ public class Message implements Serializable {
      * Date d'envoi du message.
      */
     @Column(nullable = false)
-    private LocalDateTime dateEnvoi = LocalDateTime.now();
+    private LocalDateTime dateEnvoi;
 
     /**
      * Statut de lecture du message (lu ou non).
      */
     @Column(nullable = false)
     private boolean lu = false;
+
+    @PrePersist
+    public void prePersist() {
+        if (dateEnvoi == null) {
+            dateEnvoi = LocalDateTime.now();
+        }
+    }
 }

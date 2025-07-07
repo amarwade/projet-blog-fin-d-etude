@@ -6,9 +6,11 @@ import java.util.concurrent.CompletableFuture;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import app.project_fin_d_etude.model.Post;
 
@@ -63,4 +65,20 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     default CompletableFuture<List<Post>> getAllPosts() {
         return CompletableFuture.supplyAsync(this::findAllByOrderByDatePublicationDesc);
     }
+
+    /**
+     * Met à jour l'email de l'auteur pour tous ses posts.
+     */
+    @Transactional
+    @Modifying
+    @Query("UPDATE Post p SET p.auteurEmail = :newEmail WHERE p.auteurEmail = :oldEmail")
+    int updateAuteurEmail(@Param("oldEmail") String oldEmail, @Param("newEmail") String newEmail);
+
+    /**
+     * Met à jour le nom de l'auteur pour tous ses posts.
+     */
+    @Transactional
+    @Modifying
+    @Query("UPDATE Post p SET p.auteurNom = :newNom WHERE p.auteurEmail = :email")
+    int updateAuteurNom(@Param("email") String email, @Param("newNom") String newNom);
 }

@@ -1,9 +1,9 @@
 package app.project_fin_d_etude.utils;
 
+import java.util.function.Consumer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.Consumer;
 
 /**
  * Classe utilitaire pour centraliser la gestion des exceptions côté service ou
@@ -23,6 +23,8 @@ public final class ExceptionHandler {
     public static final String ERROR_AUTHORIZATION = "Accès refusé";
     public static final String ERROR_NOT_FOUND = "Ressource non trouvée";
     public static final String ERROR_DUPLICATE = "Violation d'intégrité des données";
+    public static final String ERROR_TIMEOUT = "Délai d'attente dépassé";
+    public static final String ERROR_SERVICE_UNAVAILABLE = "Service temporairement indisponible";
 
     private ExceptionHandler() {
         // Classe utilitaire, constructeur privé
@@ -35,6 +37,14 @@ public final class ExceptionHandler {
      * @param context Contexte de l'erreur (ex: nom du service)
      */
     public static void handleException(Exception e, String context) {
+        if (e == null) {
+            logger.warn("Exception null fournie à handleException dans le contexte: {}", context);
+            return;
+        }
+        if (context == null || context.trim().isEmpty()) {
+            context = "Contexte inconnu";
+        }
+
         logger.error("Erreur dans {}: {}", context, e.getMessage(), e);
     }
 
@@ -47,8 +57,10 @@ public final class ExceptionHandler {
      */
     public static void handleException(Exception e, String context, Consumer<String> errorCallback) {
         handleException(e, context);
-        String userMessage = getUserFriendlyMessage(e);
-        errorCallback.accept(userMessage);
+        if (errorCallback != null) {
+            String userMessage = getUserFriendlyMessage(e);
+            errorCallback.accept(userMessage);
+        }
     }
 
     /**
@@ -61,6 +73,11 @@ public final class ExceptionHandler {
      * @return Résultat de l'opération ou null
      */
     public static <T> T executeWithErrorHandling(ThrowingSupplier<T> operation, String context, Consumer<String> errorCallback) {
+        if (operation == null) {
+            logger.warn("Opération null fournie à executeWithErrorHandling dans le contexte: {}", context);
+            return null;
+        }
+
         try {
             return operation.get();
         } catch (Exception e) {
@@ -77,10 +94,63 @@ public final class ExceptionHandler {
      * @param errorCallback Callback pour afficher un message utilisateur
      */
     public static void executeWithErrorHandling(ThrowingRunnable operation, String context, Consumer<String> errorCallback) {
+        if (operation == null) {
+            logger.warn("Opération null fournie à executeWithErrorHandling dans le contexte: {}", context);
+            return;
+        }
+
         try {
             operation.run();
         } catch (Exception e) {
             handleException(e, context, errorCallback);
+        }
+    }
+
+    /**
+     * Exécute une opération avec gestion d'erreur et retourne le résultat ou
+     * une valeur par défaut en cas d'exception.
+     *
+     * @param operation Opération à exécuter
+     * @param defaultValue Valeur par défaut en cas d'erreur
+     * @param context Contexte de l'opération
+     * @param errorCallback Callback pour afficher un message utilisateur
+     * @return Résultat de l'opération ou valeur par défaut
+     */
+    public static <T> T executeWithErrorHandling(ThrowingSupplier<T> operation, T defaultValue, String context, Consumer<String> errorCallback) {
+        if (operation == null) {
+            logger.warn("Opération null fournie à executeWithErrorHandling dans le contexte: {}", context);
+            return defaultValue;
+        }
+
+        try {
+            return operation.get();
+        } catch (Exception e) {
+            handleException(e, context, errorCallback);
+            return defaultValue;
+        }
+    }
+
+    /**
+     * Exécute une opération avec gestion d'erreur et retourne un boolean
+     * indiquant le succès.
+     *
+     * @param operation Opération à exécuter
+     * @param context Contexte de l'opération
+     * @param errorCallback Callback pour afficher un message utilisateur
+     * @return true si l'opération a réussi, false sinon
+     */
+    public static boolean executeWithSuccessHandling(ThrowingRunnable operation, String context, Consumer<String> errorCallback) {
+        if (operation == null) {
+            logger.warn("Opération null fournie à executeWithSuccessHandling dans le contexte: {}", context);
+            return false;
+        }
+
+        try {
+            operation.run();
+            return true;
+        } catch (Exception e) {
+            handleException(e, context, errorCallback);
+            return false;
         }
     }
 
@@ -92,11 +162,15 @@ public final class ExceptionHandler {
      * @return Message utilisateur
      */
     public static String getUserFriendlyMessage(Exception e) {
+        if (e == null) {
+            return ERROR_GENERIC;
+        }
+
         if (e instanceof IllegalArgumentException) {
             return ERROR_VALIDATION;
         } else if (e instanceof java.sql.SQLException) {
             return ERROR_DATABASE;
-        } else if (e instanceof java.net.ConnectException) {
+        } else if (e instanceof java.net.ConnectException || e instanceof java.net.SocketTimeoutException) {
             return ERROR_NETWORK;
         } else if (e instanceof org.springframework.security.access.AccessDeniedException) {
             return ERROR_AUTHORIZATION;
@@ -106,9 +180,35 @@ public final class ExceptionHandler {
             return ERROR_NOT_FOUND;
         } else if (e instanceof org.springframework.dao.DataIntegrityViolationException) {
             return ERROR_DUPLICATE;
+        } else if (e instanceof java.util.concurrent.TimeoutException) {
+            return ERROR_TIMEOUT;
+        } else if (e instanceof org.springframework.web.client.ResourceAccessException) {
+            return ERROR_SERVICE_UNAVAILABLE;
         } else {
             return ERROR_GENERIC;
         }
+    }
+
+    /**
+     * Retourne un message utilisateur détaillé avec le message original de
+     * l'exception.
+     *
+     * @param e L'exception à analyser
+     * @return Message utilisateur détaillé
+     */
+    public static String getDetailedUserMessage(Exception e) {
+        if (e == null) {
+            return ERROR_GENERIC;
+        }
+
+        String baseMessage = getUserFriendlyMessage(e);
+        String detailMessage = e.getMessage();
+
+        if (detailMessage != null && !detailMessage.trim().isEmpty()) {
+            return baseMessage + " : " + detailMessage;
+        }
+
+        return baseMessage;
     }
 
     // Interfaces fonctionnelles pour les opérations pouvant lever des exceptions
@@ -141,9 +241,13 @@ public final class ExceptionHandler {
      * @param errorCallback Callback utilisateur
      */
     public static void handleValidationError(String field, String message, Consumer<String> errorCallback) {
-        String errorMessage = String.format("Erreur de validation pour '%s': %s", field, message);
+        String errorMessage = String.format("Erreur de validation pour '%s': %s",
+                field != null ? field : "champ inconnu",
+                message != null ? message : "erreur inconnue");
         logger.warn(errorMessage);
-        errorCallback.accept(message);
+        if (errorCallback != null) {
+            errorCallback.accept(message != null ? message : ERROR_VALIDATION);
+        }
     }
 
     /**
@@ -153,8 +257,10 @@ public final class ExceptionHandler {
      * @param errorCallback Callback utilisateur
      */
     public static void handleDatabaseError(Exception e, Consumer<String> errorCallback) {
-        logger.error("Erreur de base de données: {}", e.getMessage(), e);
-        errorCallback.accept(ERROR_DATABASE);
+        logger.error("Erreur de base de données: {}", e != null ? e.getMessage() : "Exception null", e);
+        if (errorCallback != null) {
+            errorCallback.accept(ERROR_DATABASE);
+        }
     }
 
     /**
@@ -164,8 +270,10 @@ public final class ExceptionHandler {
      * @param errorCallback Callback utilisateur
      */
     public static void handleNetworkError(Exception e, Consumer<String> errorCallback) {
-        logger.error("Erreur de réseau: {}", e.getMessage(), e);
-        errorCallback.accept(ERROR_NETWORK);
+        logger.error("Erreur de réseau: {}", e != null ? e.getMessage() : "Exception null", e);
+        if (errorCallback != null) {
+            errorCallback.accept(ERROR_NETWORK);
+        }
     }
 
     /**
@@ -175,8 +283,10 @@ public final class ExceptionHandler {
      * @param errorCallback Callback utilisateur
      */
     public static void handleAuthenticationError(Exception e, Consumer<String> errorCallback) {
-        logger.error("Erreur d'authentification: {}", e.getMessage(), e);
-        errorCallback.accept(ERROR_AUTHENTICATION);
+        logger.error("Erreur d'authentification: {}", e != null ? e.getMessage() : "Exception null", e);
+        if (errorCallback != null) {
+            errorCallback.accept(ERROR_AUTHENTICATION);
+        }
     }
 
     /**
@@ -186,7 +296,18 @@ public final class ExceptionHandler {
      * @param errorCallback Callback utilisateur
      */
     public static void handleAuthorizationError(Exception e, Consumer<String> errorCallback) {
-        logger.error("Erreur d'autorisation: {}", e.getMessage(), e);
-        errorCallback.accept(ERROR_AUTHORIZATION);
+        logger.error("Erreur d'autorisation: {}", e != null ? e.getMessage() : "Exception null", e);
+        if (errorCallback != null) {
+            errorCallback.accept(ERROR_AUTHORIZATION);
+        }
+    }
+
+    /**
+     * Gère toutes les autres exceptions non prévues.
+     * Ne jamais retourner de détails techniques à l'utilisateur, seulement un message générique.
+     */
+    public void handleUnexpectedException(Exception ex) {
+        logger.error("Erreur inattendue: {}", ex.getMessage(), ex);
+        // Ici, retourner un message générique à l'utilisateur (ex: "Une erreur interne est survenue.")
     }
 }

@@ -3,20 +3,22 @@ package app.project_fin_d_etude.views;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.presenter.MessagePresenter;
+import app.project_fin_d_etude.utils.ExceptionHandler;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
-import app.project_fin_d_etude.utils.ExceptionHandler;
 
 /**
  * Vue de contact permettant aux utilisateurs d'envoyer des messages. Cette vue
@@ -24,7 +26,8 @@ import app.project_fin_d_etude.utils.ExceptionHandler;
  */
 @Route(value = "contact", layout = MainLayout.class)
 @PageTitle("Contact")
-public class ContactView extends VerticalLayout {
+@AnonymousAllowed
+public class ContactView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private static final String SUCCESS_MESSAGE = "Message envoyé avec succès !";
 
@@ -37,6 +40,7 @@ public class ContactView extends VerticalLayout {
     @Autowired
     public ContactView(MessagePresenter messagePresenter) {
         this.messagePresenter = messagePresenter;
+        this.messagePresenter.setView(this);
         configureLayout();
         add(createMainContent());
     }
@@ -118,8 +122,6 @@ public class ContactView extends VerticalLayout {
         ExceptionHandler.executeWithErrorHandling(
                 () -> {
                     messagePresenter.envoyerMessage(message);
-                    VaadinUtils.showSuccessNotification(SUCCESS_MESSAGE);
-                    viderFormulaire();
                 },
                 "envoi de message",
                 errorMessage -> VaadinUtils.showErrorNotification(errorMessage)
@@ -165,5 +167,32 @@ public class ContactView extends VerticalLayout {
             subjectField.clear();
             messageArea.clear();
         }));
+    }
+
+    private H3 createIncitationMessage() {
+        H3 incitation = new H3("Vous avez une suggestion ou une question ? N'hésitez pas à nous contacter via ce formulaire !");
+        incitation.addClassNames(
+                LumoUtility.FontSize.LARGE,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.Margin.Bottom.LARGE,
+                LumoUtility.TextAlignment.CENTER
+        );
+        return incitation;
+    }
+
+    @Override
+    public void afficherMessage(String message) {
+        VaadinUtils.showSuccessNotification(message);
+        viderFormulaire();
+    }
+
+    @Override
+    public void afficherErreur(String erreur) {
+        VaadinUtils.showErrorNotification(erreur);
+    }
+
+    @Override
+    public void afficherMessages(java.util.List<app.project_fin_d_etude.model.Message> messages) {
+        // Non utilisé dans ContactView
     }
 }

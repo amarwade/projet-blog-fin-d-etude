@@ -42,16 +42,16 @@ public class MessagePresenter {
         }
         final MessageView currentView = this.view;
         final UI ui = UI.getCurrent();
-        messageService.save(message)
-                .whenComplete((savedMessage, ex) -> {
-                    ui.access(() -> {
-                        if (ex != null) {
-                            currentView.afficherErreur("Erreur lors de l'envoi du message : " + ex.getMessage());
-                        } else {
-                            currentView.afficherMessage("Message envoyé avec succès !");
-                        }
-                    });
-                });
+        try {
+            messageService.save(message);
+            ui.access(() -> {
+                currentView.afficherMessage("Message envoyé avec succès !");
+            });
+        } catch (Exception ex) {
+            ui.access(() -> {
+                currentView.afficherErreur("Erreur lors de l'envoi du message : " + ex.getMessage());
+            });
+        }
     }
 
     /**
@@ -84,16 +84,16 @@ public class MessagePresenter {
         }
         final MessageView currentView = this.view;
         final UI ui = UI.getCurrent();
-        messageService.markAsRead(messageId)
-                .whenComplete((unused, ex) -> {
-                    ui.access(() -> {
-                        if (ex != null) {
-                            currentView.afficherErreur("Erreur lors du marquage du message : " + ex.getMessage());
-                        } else {
-                            currentView.afficherMessage("Message marqué comme lu");
-                        }
-                    });
-                });
+        try {
+            messageService.markAsRead(messageId);
+            ui.access(() -> {
+                currentView.afficherMessage("Message marqué comme lu");
+            });
+        } catch (Exception ex) {
+            ui.access(() -> {
+                currentView.afficherErreur("Erreur lors du marquage du message : " + ex.getMessage());
+            });
+        }
     }
 
     /**
@@ -105,15 +105,15 @@ public class MessagePresenter {
         }
         final MessageView currentView = this.view;
         final UI ui = UI.getCurrent();
-        messageService.delete(messageId)
-                .whenComplete((unused, ex) -> {
-                    ui.access(() -> {
-                        if (ex != null) {
-                            currentView.afficherErreur("Erreur lors de la suppression du message : " + ex.getMessage());
-                        } else {
-                            currentView.afficherMessage("Message supprimé avec succès");
-                        }
-                    });
-                });
+        try {
+            messageService.delete(messageId);
+            ui.access(() -> {
+                currentView.afficherMessage("Message supprimé avec succès");
+            });
+        } catch (Exception ex) {
+            ui.access(() -> {
+                currentView.afficherErreur("Erreur lors de la suppression du message : " + ex.getMessage());
+            });
+        }
     }
 }

@@ -1,11 +1,12 @@
 package app.project_fin_d_etude.views;
 
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.MainLayout;
@@ -17,6 +18,7 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "about", layout = MainLayout.class)
 @PageTitle("About")
+@AnonymousAllowed
 public class AboutView extends VerticalLayout {
 
     /**
@@ -26,14 +28,13 @@ public class AboutView extends VerticalLayout {
         setSpacing(false);
         setSizeFull();
         setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-        getStyle().set("text-align", "center");
-        addClassNames(LumoUtility.Background.CONTRAST_5, LumoUtility.Padding.LARGE);
+        addClassNames("about-view", LumoUtility.Background.CONTRAST_5, LumoUtility.Padding.LARGE);
 
         // Conteneur principal
         VerticalLayout mainContainer = new VerticalLayout();
         mainContainer.setWidth("100%");
         mainContainer.setMaxWidth("1200px");
-        mainContainer.addClassNames(
+        mainContainer.addClassNames("about-main-container",
                 LumoUtility.Background.BASE,
                 LumoUtility.BorderRadius.LARGE,
                 LumoUtility.BoxShadow.MEDIUM,
@@ -41,15 +42,16 @@ public class AboutView extends VerticalLayout {
         );
 
         // Séparateur supérieur
-        mainContainer.add(VaadinUtils.createSeparator("80%"));
+        mainContainer.add(VaadinUtils.createSeparator("100%"));
 
         // Titre principal
-        H1 title = VaadinUtils.createPageTitle("À PROPOS DU SITE");
+        H3 title = VaadinUtils.createPageTitle("À PROPOS DU SITE");
+        title.addClassName("about-title");
         title.setWidth("100%");
         mainContainer.add(title);
 
         // Séparateur sous le titre
-        mainContainer.add(VaadinUtils.createSeparator("80%"));
+        mainContainer.add(VaadinUtils.createSeparator("100%"));
 
         // Description du site
         Paragraph description = new Paragraph(
@@ -69,7 +71,6 @@ public class AboutView extends VerticalLayout {
         VerticalLayout featuresSection = createSection("Fonctionnalités principales",
                 "• Publication d'articles<br>"
                 + "• Système de commentaires<br>"
-                + "• Catégorisation du contenu<br>"
                 + "• Interface responsive<br>"
                 + "• Authentification sécurisée");
         mainContainer.add(featuresSection);
@@ -110,7 +111,7 @@ public class AboutView extends VerticalLayout {
 
         Paragraph content = new Paragraph();
         content.getElement().setProperty("innerHTML", htmlContent);
-        content.getStyle().set("text-align", "left");
+        content.addClassName("about-section-content");
 
         section.add(sectionTitle, content);
         return section;

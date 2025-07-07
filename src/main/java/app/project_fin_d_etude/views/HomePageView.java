@@ -2,20 +2,29 @@
 package app.project_fin_d_etude.views;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.orderedlayout.FlexLayout;
-import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.server.VaadinSession;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
@@ -26,8 +35,10 @@ import app.project_fin_d_etude.utils.VaadinUtils;
 
 @Route(value = "", layout = MainLayout.class)
 @PageTitle("Accueil")
+@AnonymousAllowed
 public class HomePageView extends VerticalLayout implements PostPresenter.PostView {
 
+    private static final Logger logger = LoggerFactory.getLogger(HomePageView.class);
     private static final int MAX_ARTICLES = 6;
     private static final String DATE_FORMAT = "dd MMMM yyyy";
     private static final String MAIN_DESCRIPTION = "L'objectif du site est de fournir un espace clair et structuré pour le partage de connaissances, opinions ou d'actualités tout en assurant la modération et la fiabilité des échanges.";
@@ -37,9 +48,12 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     private VerticalLayout postsContainer;
     private final PostPresenter postPresenter;
     private final AsyncDataLoader asyncDataLoader;
+    @Autowired
+    private Executor taskExecutor;
 
     @Autowired
     public HomePageView(final PostPresenter postPresenter, final AsyncDataLoader asyncDataLoader) {
+        logger.info("Initialisation de HomePageView");
         this.postPresenter = postPresenter;
         this.asyncDataLoader = asyncDataLoader;
         this.postPresenter.setView(this);
@@ -49,7 +63,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         add(createMainSection());
 
         H3 recentPostsTitle = new H3("Articles récents");
-        recentPostsTitle.getStyle().set("margin-top", "32px").set("text-align", "center").set("font-size", "1.5rem").set("font-weight", "bold").set("width", "100%");
+        recentPostsTitle.addClassName("home-recent-posts-title");
         add(recentPostsTitle);
 
         postsContainer = new VerticalLayout();
@@ -60,21 +74,54 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         add(postsContainer);
 
         setupRecentPostsGrid();
+        logger.info("HomePageView initialisée avec succès");
     }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
         super.onAttach(attachEvent);
+        logger.info("onAttach appelé, initialAttach: {}", attachEvent.isInitialAttach());
         if (attachEvent.isInitialAttach()) {
-            asyncDataLoader.loadData(
-                    postsContainer,
-                    postPresenter::getAllPostsSync,
-                    posts -> {
+            logger.info("Début du chargement des posts");
+            // Affichage immédiat d'un message de chargement
+            Paragraph loadingMessage = new Paragraph("Chargement des articles en cours...");
+            loadingMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER, LumoUtility.FontSize.LARGE);
+            postsContainer.add(loadingMessage);
+            // Test avec des données fictives d'abord
+            logger.info("Test avec des données fictives");
+            List<Post> testPosts = createTestPosts();
+            getUI().ifPresent(ui -> ui.access(() -> {
+                postsContainer.removeAll();
+                postsContainer.add(recentPostsGrid);
+                afficherArticlesRecents(testPosts);
+            }));
+            // Chargement réel en asynchrone
+            taskExecutor.execute(() -> {
+                try {
+                    List<Post> posts = postPresenter.getAllPostsSync();
+                    logger.info("Chargement asynchrone réussi: {} posts", posts != null ? posts.size() : 0);
+                    getUI().ifPresent(ui -> ui.access(() -> {
+                        postsContainer.removeAll();
                         postsContainer.add(recentPostsGrid);
                         afficherArticlesRecents(posts);
-                    },
-                    errorMessage -> VaadinUtils.showErrorNotification(errorMessage)
-            );
+                    }));
+                } catch (Exception e) {
+                    logger.error("Erreur lors du chargement asynchrone: {}", e.getMessage(), e);
+                    getUI().ifPresent(ui -> ui.access(() -> {
+                        postsContainer.removeAll();
+                        Paragraph errorMsg = new Paragraph("Erreur lors du chargement des articles depuis la base de données. Affichage des données de test.");
+                        errorMsg.getStyle().set("color", "orange").set("font-weight", "bold").set("font-size", "1.2em");
+                        postsContainer.add(errorMsg);
+                        postsContainer.add(recentPostsGrid);
+                        afficherArticlesRecents(testPosts);
+                        Button retryButton = new Button("Réessayer", event -> {
+                            postsContainer.removeAll();
+                            onAttach(attachEvent);
+                        });
+                        postsContainer.add(retryButton);
+                    }));
+                }
+            });
         }
     }
 
@@ -83,11 +130,8 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         recentPostsGrid.setWidthFull();
         recentPostsGrid.setFlexWrap(FlexLayout.FlexWrap.WRAP);
         recentPostsGrid.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        recentPostsGrid.getStyle()
-                .set("max-width", "100%")
-                .set("margin", "32px auto 0 auto")
-                .set("padding", "16px")
-                .set("box-sizing", "border-box");
+        recentPostsGrid.addClassName("home-recent-posts-grid");
+        recentPostsGrid.getStyle().clear();
     }
 
     private void configureLayout() {
@@ -111,8 +155,8 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         return mainSection;
     }
 
-    private H1 createMainTitle() {
-        final H1 title = new H1("LE BLOG");
+    private H3 createMainTitle() {
+        final H3 title = new H3("ACCUEIL");
         title.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -153,7 +197,9 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     public void afficherErreur(final String erreur) {
         getUI().ifPresent(ui -> ui.access(() -> {
             postsContainer.removeAll();
-            postsContainer.add(new Paragraph(erreur));
+            Paragraph errorMsg = new Paragraph("Erreur : " + erreur);
+            errorMsg.getStyle().set("color", "red").set("font-weight", "bold").set("font-size", "1.2em");
+            postsContainer.add(errorMsg);
         }));
     }
 
@@ -163,6 +209,13 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     @Override
     public void redirigerVersDetail(Long postId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
+        if (!isAuthenticated) {
+            getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak"));
+        } else {
+            getUI().ifPresent(ui -> ui.navigate("/user/article/" + postId));
+        }
     }
 
     @Override
@@ -185,5 +238,30 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     private BlogPostCard createPostCard(final Post post) {
         return new BlogPostCard(post);
+    }
+
+    private List<Post> createTestPosts() {
+        List<Post> testPosts = new ArrayList<>();
+
+        Post testPost1 = new Post();
+        testPost1.setId(1L);
+        testPost1.setTitre("Article de test 1");
+        testPost1.setContenu("Ceci est le contenu du premier article de test. Il contient du texte pour tester l'affichage des articles sur la page d'accueil.");
+        testPost1.setAuteurNom("Admin Test");
+        testPost1.setAuteurEmail("admin@test.com");
+        testPost1.setDatePublication(java.time.LocalDateTime.now().minusDays(1));
+
+        Post testPost2 = new Post();
+        testPost2.setId(2L);
+        testPost2.setTitre("Article de test 2");
+        testPost2.setContenu("Ceci est le contenu du deuxième article de test. Il permet de vérifier que plusieurs articles s'affichent correctement.");
+        testPost2.setAuteurNom("Utilisateur Test");
+        testPost2.setAuteurEmail("user@test.com");
+        testPost2.setDatePublication(java.time.LocalDateTime.now().minusHours(6));
+
+        testPosts.add(testPost1);
+        testPosts.add(testPost2);
+
+        return testPosts;
     }
 }
