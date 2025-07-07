@@ -4,16 +4,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
+import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.avatar.Avatar;
-import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.utils.Routes;
 
@@ -75,7 +75,7 @@ public class Header extends HorizontalLayout {
             userIcon.getStyle().set("margin-right", "8px");
             Icon logoutIcon = VaadinIcon.SIGN_OUT.create();
             logoutIcon.getStyle().set("margin-right", "8px");
-            menu.addItem(new HorizontalLayout(userIcon, new Span("Profil")), e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/user/profile")));
+            menu.addItem(new HorizontalLayout(userIcon, new Span("Profil")), e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/profile")));
             menu.addItem(new HorizontalLayout(logoutIcon, new Span("Déconnexion")), e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
         } else {
             actionButton = new Button("Connexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak")));

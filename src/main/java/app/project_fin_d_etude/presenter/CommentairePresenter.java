@@ -1,6 +1,7 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
+
 import org.springframework.stereotype.Component;
 
 import com.vaadin.flow.component.UI;
@@ -78,8 +79,9 @@ public class CommentairePresenter {
                 currentView.rafraichirListe();
             });
         } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(CommentairePresenter.class).error("Erreur lors de l'ajout du commentaire : {}", ex.getMessage(), ex);
             ui.access(() -> {
-                currentView.afficherErreur("Erreur lors de l'ajout du commentaire : " + ex.getMessage());
+                currentView.afficherErreur("Une erreur est survenue lors de l'ajout du commentaire.");
             });
         }
     }
@@ -103,8 +105,9 @@ public class CommentairePresenter {
                 currentView.rafraichirListe();
             });
         } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(CommentairePresenter.class).error("Erreur lors de la suppression du commentaire : {}", ex.getMessage(), ex);
             ui.access(() -> {
-                currentView.afficherErreur("Erreur lors de la suppression du commentaire : " + ex.getMessage());
+                currentView.afficherErreur("Une erreur est survenue lors de la suppression du commentaire.");
             });
         }
     }
@@ -129,8 +132,9 @@ public class CommentairePresenter {
                 currentView.rafraichirListe();
             });
         } catch (Exception ex) {
+            org.slf4j.LoggerFactory.getLogger(CommentairePresenter.class).error("Erreur lors de la modification du commentaire : {}", ex.getMessage(), ex);
             ui.access(() -> {
-                currentView.afficherErreur("Erreur lors de la modification du commentaire : " + ex.getMessage());
+                currentView.afficherErreur("Une erreur est survenue lors de la modification du commentaire.");
             });
         }
     }

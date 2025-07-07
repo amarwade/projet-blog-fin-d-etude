@@ -1,15 +1,17 @@
 package app.project_fin_d_etude.utils;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import com.vaadin.flow.server.HandlerHelper;
-import com.vaadin.flow.shared.ApplicationConstants;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import java.util.stream.Stream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
-import java.util.stream.Stream;
+import com.vaadin.flow.server.HandlerHelper;
+import com.vaadin.flow.shared.ApplicationConstants;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Utilitaires pour la sécurité et l'authentification utilisateur.
@@ -26,26 +28,46 @@ public final class SecurityUtils {
 
     /**
      * Retourne l'email (ou l'identifiant principal) de l'utilisateur
-     * actuellement connecté.
+     * actuellement connecté (compatible OIDC).
      *
-     * @return L'email de l'utilisateur connecté, ou null si non authentifié
+     * @return L'email OIDC de l'utilisateur connecté, ou null si non
+     * authentifié
      */
     public static String getCurrentUserEmail() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return getCurrentUserEmail(auth);
+    }
+
+    /**
+     * Retourne l'email (ou l'identifiant principal) de l'utilisateur à partir
+     * d'un Authentication explicite (compatible OIDC).
+     *
+     * @param auth Authentication à utiliser
+     * @return L'email OIDC de l'utilisateur connecté, ou null si non
+     * authentifié
+     */
+    public static String getCurrentUserEmail(Authentication auth) {
         if (isValidAuthentication(auth)) {
+            Object principal = auth.getPrincipal();
+            if (principal instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser oidcUser) {
+                String email = oidcUser.getEmail();
+                if (email != null && !email.isBlank()) {
+                    return email;
+                }
+            }
             return auth.getName();
         }
         return null;
     }
 
     /**
-     * Vérifie si un utilisateur est connecté.
+     * Vérifie si un utilisateur est connecté (authentifié OIDC).
      *
-     * @return true si l'utilisateur est authentifié, false sinon
+     * @return true si l'utilisateur est authentifié OIDC, false sinon
      */
     public static boolean isUserAuthenticated() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return isValidAuthentication(auth) && !ANONYMOUS_USER.equals(auth.getPrincipal());
+        return isValidAuthentication(auth);
     }
 
     /**
@@ -67,9 +89,10 @@ public final class SecurityUtils {
     }
 
     /**
-     * Vérifie si l'utilisateur courant possède un rôle donné.
+     * Vérifie si l'utilisateur courant possède un rôle donné (utilise
+     * AppRoles).
      *
-     * @param role Le nom du rôle à vérifier (ex : "ADMIN")
+     * @param role Le nom du rôle à vérifier (ex : AppRoles.ADMIN)
      * @return true si l'utilisateur possède ce rôle, false sinon
      */
     public static boolean hasRole(String role) {
@@ -204,13 +227,13 @@ public final class SecurityUtils {
     }
 
     /**
-     * Vérifie si l'authentification est valide.
+     * Vérifie si l'authentification est valide (authentifié et principal OIDC).
      *
      * @param auth L'authentification à vérifier
-     * @return true si l'authentification est valide, false sinon
+     * @return true si l'authentification est valide et OIDC, false sinon
      */
     private static boolean isValidAuthentication(Authentication auth) {
-        return auth != null && auth.isAuthenticated() && auth.getPrincipal() != null;
+        return auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof org.springframework.security.oauth2.core.oidc.user.OidcUser;
     }
 
     /**
@@ -223,20 +246,16 @@ public final class SecurityUtils {
     }
 
     /**
-     * Vérifie si l'utilisateur actuel est un administrateur.
-     *
-     * @return true si l'utilisateur est admin, false sinon
+     * Vérifie si l'utilisateur actuel est un administrateur (centralisé).
      */
     public static boolean isAdmin() {
-        return hasRole("ADMIN");
+        return hasRole(app.project_fin_d_etude.config.AppRoles.ADMIN);
     }
 
     /**
-     * Vérifie si l'utilisateur actuel est un utilisateur standard.
-     *
-     * @return true si l'utilisateur est standard, false sinon
+     * Vérifie si l'utilisateur actuel est un utilisateur standard (centralisé).
      */
     public static boolean isUser() {
-        return hasRole("USER");
+        return hasRole(app.project_fin_d_etude.config.AppRoles.USER);
     }
 }

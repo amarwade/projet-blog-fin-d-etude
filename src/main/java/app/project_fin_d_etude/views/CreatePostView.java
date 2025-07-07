@@ -1,5 +1,7 @@
 package app.project_fin_d_etude.views;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,12 +22,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
-import app.project_fin_d_etude.utils.SecurityUtils;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
 import jakarta.annotation.security.RolesAllowed;
-
-import java.util.List;
 
 /**
  * Vue permettant à l'utilisateur connecté de créer un nouvel article.
@@ -215,9 +214,13 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
      */
     @Override
     public void redirigerVersDetail(Long postId) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            ui.navigate("user/article/" + postId);
-        }));
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
+        if (!isAuthenticated) {
+            getUI().ifPresent(ui -> ui.access(() -> {
+                ui.navigate("user/article/" + postId);
+            }));
+        }
     }
 
     // Méthodes non utilisées de l'interface PostView

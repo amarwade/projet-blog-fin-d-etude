@@ -3,12 +3,21 @@ package app.project_fin_d_etude.views;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import javax.annotation.security.RolesAllowed;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
@@ -22,18 +31,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
-import app.project_fin_d_etude.service.PostService;
-import com.vaadin.flow.component.notification.Notification;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import app.project_fin_d_etude.service.CommentaireService;
+import app.project_fin_d_etude.service.PostService;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
-import jakarta.annotation.security.RolesAllowed;
-import org.springframework.security.access.annotation.Secured;
 
 /**
  * Vue de détail d'un article : affiche le contenu de l'article et ses
@@ -41,7 +41,7 @@ import org.springframework.security.access.annotation.Secured;
  */
 @Route(value = "user/article", layout = MainLayout.class)
 @PageTitle("Détail de l'article")
-@Secured("OIDC_USER")
+@RolesAllowed("USER")
 public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private final PostService postService;
@@ -55,8 +55,6 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         this.postService = postService;
         this.commentaireService = commentaireService;
         add(createMainSection());
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        System.out.println("Authorities: " + authentication.getAuthorities());
     }
 
     private VerticalLayout createMainSection() {

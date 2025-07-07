@@ -1,10 +1,9 @@
 package app.project_fin_d_etude.utils;
 
+import java.util.function.Consumer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * Classe utilitaire pour centraliser la gestion des exceptions côté service ou
@@ -301,5 +300,14 @@ public final class ExceptionHandler {
         if (errorCallback != null) {
             errorCallback.accept(ERROR_AUTHORIZATION);
         }
+    }
+
+    /**
+     * Gère toutes les autres exceptions non prévues.
+     * Ne jamais retourner de détails techniques à l'utilisateur, seulement un message générique.
+     */
+    public void handleUnexpectedException(Exception ex) {
+        logger.error("Erreur inattendue: {}", ex.getMessage(), ex);
+        // Ici, retourner un message générique à l'utilisateur (ex: "Une erreur interne est survenue.")
     }
 }

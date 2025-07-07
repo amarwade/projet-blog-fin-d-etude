@@ -22,6 +22,9 @@ import org.springframework.security.access.annotation.Secured;
 
 @Route(value = "admin/messages", layout = AdminLayout.class)
 @PageTitle("Gestion des messages - Administration")
+@Secured("OIDC_ADMIN")
+
+
 public class AdminMessagesView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private final MessagePresenter messagePresenter;

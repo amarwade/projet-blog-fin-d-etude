@@ -110,12 +110,36 @@ public class PostService {
     }
 
     /**
-     * Supprime un post par son identifiant.
+     * Supprime un post par son identifiant. Seuls l'auteur du post ou un
+     * administrateur peuvent supprimer un post.
      */
     public void delete(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("L'ID du post ne peut pas être null");
         }
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Post non trouvé avec l'ID: " + id));
+
+        // Vérification des droits de suppression
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
+            String userEmail = oidcUser.getEmail();
+            boolean isAuthor = userEmail != null && userEmail.equals(post.getAuteurEmail());
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAuthor && !isAdmin) {
+                logger.warn("Tentative de suppression non autorisée du post {} par l'utilisateur {}", id, userEmail);
+                throw new SecurityException("Vous n'avez pas les droits pour supprimer ce post");
+            }
+        } else {
+            logger.warn("Tentative de suppression du post {} par un utilisateur non authentifié", id);
+            throw new SecurityException("Authentification requise pour supprimer un post");
+        }
+
+        logger.info("Suppression du post {} par l'utilisateur {}", id,
+                authentication.getPrincipal() instanceof OidcUser user ? user.getEmail() : "unknown");
         postRepository.deleteById(id);
     }
 
@@ -180,5 +204,27 @@ public class PostService {
             }
         });
         return postOpt;
+    }
+
+    /**
+     * Met à jour l'email de l'auteur pour tous ses articles.
+     */
+    public int migrerEmailAuteur(String ancienEmail, String nouvelEmail) {
+        if (ancienEmail == null || nouvelEmail == null || ancienEmail.equals(nouvelEmail)) {
+            return 0;
+        }
+        logger.info("Migration des articles de {} vers {}", ancienEmail, nouvelEmail);
+        return postRepository.updateAuteurEmail(ancienEmail, nouvelEmail);
+    }
+
+    /**
+     * Met à jour le nom de l'auteur pour tous ses articles.
+     */
+    public int migrerNomAuteur(String email, String nouveauNom) {
+        if (email == null || nouveauNom == null || email.isBlank() || nouveauNom.isBlank()) {
+            return 0;
+        }
+        logger.info("Migration du nom d'auteur des articles pour {} vers {}", email, nouveauNom);
+        return postRepository.updateAuteurNom(email, nouveauNom);
     }
 }

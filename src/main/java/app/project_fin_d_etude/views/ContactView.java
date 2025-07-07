@@ -27,7 +27,7 @@ import app.project_fin_d_etude.utils.ValidationUtils;
 @Route(value = "contact", layout = MainLayout.class)
 @PageTitle("Contact")
 @AnonymousAllowed
-public class ContactView extends VerticalLayout {
+public class ContactView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private static final String SUCCESS_MESSAGE = "Message envoyé avec succès !";
 
@@ -40,6 +40,7 @@ public class ContactView extends VerticalLayout {
     @Autowired
     public ContactView(MessagePresenter messagePresenter) {
         this.messagePresenter = messagePresenter;
+        this.messagePresenter.setView(this);
         configureLayout();
         add(createMainContent());
     }
@@ -121,8 +122,6 @@ public class ContactView extends VerticalLayout {
         ExceptionHandler.executeWithErrorHandling(
                 () -> {
                     messagePresenter.envoyerMessage(message);
-                    VaadinUtils.showSuccessNotification(SUCCESS_MESSAGE);
-                    viderFormulaire();
                 },
                 "envoi de message",
                 errorMessage -> VaadinUtils.showErrorNotification(errorMessage)
@@ -179,5 +178,21 @@ public class ContactView extends VerticalLayout {
                 LumoUtility.TextAlignment.CENTER
         );
         return incitation;
+    }
+
+    @Override
+    public void afficherMessage(String message) {
+        VaadinUtils.showSuccessNotification(message);
+        viderFormulaire();
+    }
+
+    @Override
+    public void afficherErreur(String erreur) {
+        VaadinUtils.showErrorNotification(erreur);
+    }
+
+    @Override
+    public void afficherMessages(java.util.List<app.project_fin_d_etude.model.Message> messages) {
+        // Non utilisé dans ContactView
     }
 }

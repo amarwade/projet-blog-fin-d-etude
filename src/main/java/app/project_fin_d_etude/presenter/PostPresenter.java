@@ -66,7 +66,7 @@ public class PostPresenter {
             return posts;
         } catch (Exception e) {
             logger.error("Erreur lors de la récupération des articles: {}", e.getMessage(), e);
-            throw new RuntimeException("Erreur lors de la récupération des articles.", e);
+            throw new RuntimeException("Une erreur est survenue lors de la récupération des articles.");
         }
     }
 
@@ -81,7 +81,7 @@ public class PostPresenter {
             return result;
         } catch (Exception e) {
             logger.error("[DIAG] Exception dans PostPresenter.searchAllPosts : {}", e.getMessage(), e);
-            throw new RuntimeException("Erreur lors de la recherche des articles.", e);
+            throw new RuntimeException("Une erreur est survenue lors de la recherche des articles.");
         }
     }
 
