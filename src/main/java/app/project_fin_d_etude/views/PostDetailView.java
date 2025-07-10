@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
@@ -184,25 +185,33 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     }
 
     private void afficherCommentaires(List<Commentaire> commentaires) {
-        VerticalLayout commentsContainer = new VerticalLayout();
-        commentsContainer.setWidth("55%");
-        commentsContainer.getStyle().set("margin", "0 auto");
-        commentsContainer.setPadding(false);
-        commentsContainer.setSpacing(true);
-        commentsContainer.setAlignItems(Alignment.START);
-
+        // Titre centré au-dessus du conteneur scrollable
         H2 titreCommentaires = new H2("Commentaires");
-        commentsContainer.add(titreCommentaires);
+        titreCommentaires.getStyle()
+                .set("width", "55%")
+                .set("text-align", "center")
+                .set("margin-bottom", "12px");
+        add(titreCommentaires);
+
+        Div scrollableContainer = new Div();
+        scrollableContainer.setWidth("55%");
+        scrollableContainer.getStyle()
+                .set("margin", "0 auto")
+                .set("max-height", "400px")
+                .set("overflow-y", "auto")
+                .set("background", "#fff")
+                .set("border-radius", "8px")
+                .set("box-shadow", "0 2px 8px rgba(44,62,80,0.07)")
+                .set("padding", "16px");
 
         if (commentaires != null && !commentaires.isEmpty()) {
-            // Afficher seulement les commentaires principaux (parent == null)
             commentaires.stream()
                     .filter(c -> c.getParent() == null)
-                    .forEach(commentaire -> commentsContainer.add(creerBulleCommentaire(commentaire, commentaires, 0)));
+                    .forEach(commentaire -> scrollableContainer.add(creerBulleCommentaire(commentaire, commentaires, 0)));
         } else {
-            commentsContainer.add(new Paragraph("Aucun commentaire pour cet article."));
+            scrollableContainer.add(new Paragraph("Aucun commentaire pour cet article."));
         }
-        add(commentsContainer);
+        add(scrollableContainer);
     }
 
     private VerticalLayout creerBulleCommentaire(Commentaire commentaire, List<Commentaire> tous, int niveau) {
