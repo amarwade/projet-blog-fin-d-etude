@@ -3,6 +3,8 @@ package app.project_fin_d_etude.views;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import javax.annotation.security.RolesAllowed;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -10,14 +12,17 @@ import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
-import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.BeforeEvent;
 import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
@@ -27,10 +32,9 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
-import app.project_fin_d_etude.presenter.CommentairePresenter;
-import app.project_fin_d_etude.presenter.PostPresenter;
+import app.project_fin_d_etude.service.CommentaireService;
+import app.project_fin_d_etude.service.PostService;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import app.project_fin_d_etude.utils.ValidationUtils;
 
 /**
  * Vue de détail d'un article : affiche le contenu de l'article et ses
@@ -38,352 +42,321 @@ import app.project_fin_d_etude.utils.ValidationUtils;
  */
 @Route(value = "user/article", layout = MainLayout.class)
 @PageTitle("Détail de l'article")
-public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long>, PostPresenter.PostView, CommentairePresenter.CommentaireView {
+@RolesAllowed("OIDC_USER")
+public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
-    private static final String DATE_FORMAT = "dd MMMM yyyy";
-    private static final String NO_COMMENTS_MESSAGE = "Aucun commentaire pour le moment. Soyez le premier à commenter !";
-    private static final String COMMENT_PLACEHOLDER = "Écrivez votre commentaire ici...";
-
-    private final PostPresenter postPresenter;
-    private final CommentairePresenter commentairePresenter;
-    private final DateTimeFormatter dateFormatter;
-
-    private VerticalLayout commentsSection;
-    private TextArea commentTextArea;
-    private Button submitButton;
+    private final PostService postService;
+    private final CommentaireService commentaireService;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
     private Post currentPost;
+    private VerticalLayout champReponseOuvert = null;
 
     @Autowired
-    public PostDetailView(PostPresenter postPresenter, CommentairePresenter commentairePresenter) {
-        this.postPresenter = postPresenter;
-        this.commentairePresenter = commentairePresenter;
-        this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
-        this.postPresenter.setView(this);
-        this.commentairePresenter.setView(this);
+    public PostDetailView(PostService postService, CommentaireService commentaireService) {
+        this.postService = postService;
+        this.commentaireService = commentaireService;
+        add(createMainSection());
     }
 
-    /**
-     * Récupère l'identifiant de l'article depuis l'URL et déclenche le
-     * chargement.
-     */
-    @Override
-    public void setParameter(BeforeEvent event, Long postId) {
-        if (postId == null) {
-            getUI().ifPresent(ui -> ui.navigate("articles"));
-            VaadinUtils.showErrorNotification("ID d'article invalide");
-            return;
-        }
-        removeAll(); // Nettoyer la vue avant de charger
-        VaadinUtils.showLoading(this);
-        postPresenter.chargerPost(postId);
-    }
-
-    /**
-     * Affiche le contenu de l'article et déclenche le chargement des
-     * commentaires.
-     */
-    @Override
-    public void afficherPost(Post post) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.hideLoading(this); // Cacher le loader principal
-            if (post == null) {
-                showErrorAndRedirect("Article introuvable ou supprimé");
-                return;
-            }
-            this.currentPost = post;
-            renderPostContent(post);
-            // Le chargement des commentaires est déclenché ici
-            commentairePresenter.chargerCommentaires(post);
-        }));
-    }
-
-    /**
-     * Construit et affiche le contenu principal de l'article.
-     */
-    private void renderPostContent(Post post) {
-        removeAll();
-
-        VerticalLayout mainContent = new VerticalLayout();
-        mainContent.setWidth("100%");
-        mainContent.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
-        mainContent.addClassNames(LumoUtility.Padding.Vertical.LARGE);
-
-        mainContent.add(
-                createPostHeader(post),
-                createPostBody(post.getContenu()),
-                createCommentsContainer()
+    private VerticalLayout createMainSection() {
+        final VerticalLayout mainSection = new VerticalLayout();
+        mainSection.setWidth("100%");
+        mainSection.setAlignItems(Alignment.CENTER);
+        mainSection.addClassNames(
+                LumoUtility.Padding.Vertical.LARGE,
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.CONTRAST
         );
-
-        add(mainContent);
+        mainSection.add(VaadinUtils.createSeparator("80%"));
+        mainSection.add(createMainTitle());
+        mainSection.add(VaadinUtils.createSeparator("80%"));
+        return mainSection;
     }
 
     /**
-     * Crée l'en-tête de l'article (titre, métadonnées).
+     * Crée le titre principal de la page profil.
      */
-    private VerticalLayout createPostHeader(Post post) {
-        VerticalLayout header = new VerticalLayout();
-        header.add(
-                createPostTitle(post.getTitre()),
-                createPostMetadata(post)
-        );
-        return header;
-    }
-
-    /**
-     * Crée le titre de l'article.
-     */
-    private H1 createPostTitle(String title) {
-        H1 titleComponent = new H1(title);
-        titleComponent.addClassNames(
+    private H3 createMainTitle() {
+        final H3 title = new H3("Details de l'article");
+        title.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
                 LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Margin.Bottom.LARGE,
+                LumoUtility.Margin.Bottom.MEDIUM,
                 LumoUtility.FontWeight.BOLD
         );
-        titleComponent.getStyle().set("text-align", "center");
-        titleComponent.getStyle().set("width", "100%");
-
-        return titleComponent;
+        return title;
     }
 
-    /**
-     * Crée les métadonnées de l'article (auteur, date).
-     */
-    private HorizontalLayout createPostMetadata(Post post) {
-        String authorName = post.getAuteurNom() != null && !post.getAuteurNom().isBlank() ? post.getAuteurNom() : "Auteur inconnu";
-        String dateStr = post.getDatePublication() != null ? post.getDatePublication().format(dateFormatter) : "";
-
-        Paragraph auteurPara = new Paragraph("Par " + authorName);
-        auteurPara.getStyle().set("font-weight", "bold").set("margin-right", "1em");
-        Paragraph datePara = new Paragraph(dateStr);
-
-        HorizontalLayout metadata = new HorizontalLayout(auteurPara, datePara);
-        metadata.setSpacing(true);
-        metadata.setPadding(false);
-        metadata.setWidthFull();
-        metadata.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        metadata.setAlignItems(FlexComponent.Alignment.CENTER);
-
-        return metadata;
-    }
-
-    /**
-     * Crée le corps de l'article.
-     */
-    private Div createPostBody(String content) {
-        Div contentDiv = new Div(new Paragraph(content));
-        contentDiv.getStyle()
-                .set("background", "#f7f7fa")
-                .set("border-radius", "8px")
-                .set("box-shadow", "0 1px 4px rgba(0,0,0,0.04)")
-                .set("border", "1px solid #e0e0e0")
-                .set("padding", "1.2em")
-                .set("margin-bottom", "2em")
-                .set("width", "60%")
-                .set("align-self", "center")
-                .set("text-align", "left");
-
-        return contentDiv;
-    }
-
-    /**
-     * Crée la section des commentaires (formulaire + liste).
-     */
-    private VerticalLayout createCommentsContainer() {
-        H2 commentairesTitle = new H2("Commentaires");
-        commentairesTitle.getStyle().set("width", "55%");
-
-        commentsSection = new VerticalLayout();
-        commentsSection.setWidth("55%"); // même largeur que le formulaire
-        commentsSection.setPadding(false);
-        commentsSection.setSpacing(true);
-
-        VerticalLayout container = new VerticalLayout(
-                commentairesTitle,
-                createCommentInputForm(),
-                commentsSection
-        );
-        container.setWidth("100%");
-        container.setAlignItems(FlexComponent.Alignment.CENTER);
-        return container;
-    }
-
-    /**
-     * Crée le formulaire de saisie de commentaire.
-     */
-    private HorizontalLayout createCommentInputForm() {
-        commentTextArea = new TextArea();
-        commentTextArea.setPlaceholder(COMMENT_PLACEHOLDER);
-        commentTextArea.setWidth("100%");
-        commentTextArea.setHeight("35px");
-
-        submitButton = new Button("Publier", e -> handleCommentSubmission());
-
-        HorizontalLayout formLayout = new HorizontalLayout(commentTextArea, submitButton);
-        formLayout.setWidth("55%");
-        formLayout.setAlignItems(FlexComponent.Alignment.END);
-        formLayout.setSpacing(true);
-
-        submitButton.getStyle().set("min-width", "120px");
-
-        formLayout.setFlexGrow(1, commentTextArea);
-
-        return formLayout;
-    }
-
-    /**
-     * Gère la soumission d'un commentaire (validation, feedback).
-     */
-    private void handleCommentSubmission() {
-        ValidationUtils.ValidationResult validation = ValidationUtils.validateContent(commentTextArea);
-        if (!validation.isValid()) {
-            VaadinUtils.showErrorNotification(validation.getErrorMessage());
-            return;
-        }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser)) {
-            VaadinUtils.showErrorNotification("Impossible de récupérer l'utilisateur connecté.");
-            return;
-        }
-        OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
-
-        Commentaire commentaire = new Commentaire();
-        commentaire.setContenu(commentTextArea.getValue().trim());
-        commentaire.setPost(currentPost);
-        commentaire.setAuteurEmail(oidcUser.getEmail());
-        String givenName = oidcUser.getGivenName();
-        String familyName = oidcUser.getFamilyName();
-        if (givenName != null && familyName != null) {
-            commentaire.setAuteurNom(givenName + " " + familyName);
-        } else if (oidcUser.getFullName() != null) {
-            commentaire.setAuteurNom(oidcUser.getFullName());
-        } else {
-            commentaire.setAuteurNom(oidcUser.getEmail());
-        }
-        commentairePresenter.ajouter(commentaire);
-    }
-
-    /**
-     * Affiche la liste des commentaires ou un message s'il n'y en a pas.
-     */
     @Override
-    public void afficherCommentaires(List<Commentaire> commentaires) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.hideLoading(this);
-            commentsSection.removeAll();
+    public void setParameter(BeforeEvent event, Long postId) {
+        removeAll();
+        Post post = null;
+        try {
+            post = postService.getPostWithCommentaires(postId).orElse(null);
+        } catch (Exception e) {
+            add(new Paragraph("Erreur lors de la récupération du post : " + e.getMessage()));
+        }
+        if (post != null) {
+            this.currentPost = post;
+            // Titre principal centré avec traits
+            VerticalLayout titreSection = new VerticalLayout();
 
-            if (commentaires.isEmpty()) {
-                commentsSection.add(new Paragraph(NO_COMMENTS_MESSAGE));
-            } else {
-                commentaires.forEach(comment
-                        -> commentsSection.add(createCommentBubble(comment))
-                );
-            }
-        }));
+            titreSection.setWidthFull();
+            titreSection.setAlignItems(Alignment.CENTER);
+            titreSection.getStyle().set("margin-top", "30px").set("margin-bottom", "18px");
+            add(titreSection);
+
+            H2 titre = new H2(post.getTitre());
+            titre.addClassName("post-detail-title");
+
+            // Affichage de l'auteur et de la date de publication
+            String auteur = post.getAuteurNom() != null ? post.getAuteurNom() : "Auteur inconnu";
+            String date = post.getDatePublication() != null ? post.getDatePublication().format(dateFormatter) : "";
+            Paragraph meta = new Paragraph(auteur + (date.isEmpty() ? "" : " • " + date));
+            meta.addClassName("post-detail-meta-author");
+
+            // Contenu de l'article dans une bulle centrée
+            Paragraph contenu = new Paragraph(post.getContenu());
+            contenu.addClassName("post-detail-body");
+
+            // AJOUT : afficher titre, meta et contenu avant le formulaire de commentaire
+            add(titre, meta, contenu);
+
+            // Formulaire de commentaire centré sous l'article
+            HorizontalLayout formLayout = new HorizontalLayout();
+            formLayout.setWidth("55%");
+            formLayout.setHeight("40px");
+            formLayout.getStyle().set("margin", "0 auto 2em auto");
+            formLayout.setAlignItems(Alignment.END);
+
+            TextArea commentField = new TextArea();
+            commentField.setPlaceholder("Écrivez votre commentaire ici...");
+            commentField.setWidthFull();
+            commentField.setHeight("40px");
+
+            Button publierBtn = new Button("Publier");
+
+            publierBtn.addClickListener(e -> {
+                String contenuCommentaire = commentField.getValue();
+                if (contenuCommentaire == null || contenuCommentaire.trim().isEmpty()) {
+                    Notification.show("Le commentaire ne peut pas être vide.", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                // Récupérer l'utilisateur connecté
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser)) {
+                    Notification.show("Utilisateur non authentifié.", 3000, Notification.Position.MIDDLE);
+                    return;
+                }
+                OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+                Commentaire commentaire = new Commentaire();
+                commentaire.setContenu(contenuCommentaire.trim());
+                commentaire.setPost(currentPost);
+                commentaire.setAuteurEmail(oidcUser.getEmail());
+                String givenName = oidcUser.getGivenName();
+                String familyName = oidcUser.getFamilyName();
+                if (givenName != null && familyName != null) {
+                    commentaire.setAuteurNom(givenName + " " + familyName);
+                } else if (oidcUser.getFullName() != null) {
+                    commentaire.setAuteurNom(oidcUser.getFullName());
+                } else {
+                    commentaire.setAuteurNom(oidcUser.getEmail());
+                }
+                try {
+                    commentaireService.save(commentaire);
+                    Notification.show("Commentaire publié !", 3000, Notification.Position.MIDDLE);
+                    commentField.clear();
+                    removeAll();
+                    setParameter(null, currentPost.getId());
+                } catch (Exception ex) {
+                    Notification.show("Erreur lors de la publication : " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
+                }
+            });
+
+            formLayout.add(commentField, publierBtn);
+            formLayout.setFlexGrow(1, commentField);
+            add(formLayout);
+
+            afficherCommentaires(post.getCommentaires());
+        } else {
+            add(new Paragraph("Aucun article trouvé pour l'ID : " + postId));
+        }
     }
 
-    /**
-     * Crée une carte de commentaire.
-     */
-    private Div createCommentBubble(Commentaire commentaire) {
-        Div bubble = new Div();
-        bubble.getStyle()
-                .set("background", "#f7f7fa")
-                .set("border-radius", "8px")
-                .set("box-shadow", "0 1px 4px rgba(0,0,0,0.04)")
-                .set("border", "1px solid #e0e0e0")
-                .set("margin-bottom", "0.5em")
-                .set("padding", "1em");
+    private void afficherCommentaires(List<Commentaire> commentaires) {
+        // Titre centré au-dessus du conteneur scrollable
+        H2 titreCommentaires = new H2("Commentaires");
+        titreCommentaires.getStyle()
+                .set("width", "55%")
+                .set("text-align", "center")
+                .set("margin-bottom", "12px");
+        add(titreCommentaires);
 
-        // Auteur et date
+        Div scrollableContainer = new Div();
+        scrollableContainer.setWidth("55%");
+        scrollableContainer.getStyle()
+                .set("margin", "0 auto")
+                .set("max-height", "400px")
+                .set("overflow-y", "auto")
+                .set("background", "#fff")
+                .set("border-radius", "8px")
+                .set("box-shadow", "0 2px 8px rgba(44,62,80,0.07)")
+                .set("padding", "16px");
+
+        if (commentaires != null && !commentaires.isEmpty()) {
+            commentaires.stream()
+                    .filter(c -> c.getParent() == null)
+                    .forEach(commentaire -> scrollableContainer.add(creerBulleCommentaire(commentaire, commentaires, 0)));
+        } else {
+            scrollableContainer.add(new Paragraph("Aucun commentaire pour cet article."));
+        }
+        add(scrollableContainer);
+    }
+
+    private VerticalLayout creerBulleCommentaire(Commentaire commentaire, List<Commentaire> tous, int niveau) {
+        VerticalLayout bulle = new VerticalLayout();
+        bulle.setSpacing(false);
+        bulle.setPadding(false);
+        bulle.addClassName("post-detail-comment-bubble");
+        bulle.addClassName("level-" + niveau);
+        bulle.getStyle().set("margin-left", (niveau * 32) + "px");
+
+        Icon userIcon = VaadinIcon.USER.create();
+        userIcon.setSize("18px");
+        userIcon.getStyle().set("color", "#1976d2");
         String auteur = commentaire.getAuteurNom() != null ? commentaire.getAuteurNom() : "Auteur inconnu";
         String date = commentaire.getDateCreation() != null ? commentaire.getDateCreation().format(dateFormatter) : "";
-        Span auteurDate = new Span(auteur + " • " + date);
-        auteurDate.getStyle().set("font-weight", "bold").set("font-size", "0.95em").set("display", "block").set("margin-bottom", "0.3em");
+        Span auteurSpan = new Span(auteur);
+        auteurSpan.getStyle().set("font-weight", "bold").set("color", "#1976d2");
+        Span dateSpan = new Span(date);
+        dateSpan.getStyle().set("font-size", "0.9em").set("color", "#888").set("margin-left", "8px");
+        HorizontalLayout auteurDate = new HorizontalLayout(userIcon, auteurSpan, dateSpan);
+        auteurDate.setSpacing(true);
+        auteurDate.addClassName("post-detail-comment-author-date");
+        auteurDate.setAlignItems(Alignment.CENTER);
 
-        // Label inapproprié si besoin
-        Span inapproprieLabel = null;
+        // Badge inapproprié si besoin
         if (commentaire.isInapproprie()) {
-            inapproprieLabel = new Span("Inapproprié");
-            inapproprieLabel.getStyle()
-                    .set("color", "white")
-                    .set("background", "#d32f2f")
-                    .set("padding", "0.2em 0.7em")
-                    .set("border-radius", "8px")
-                    .set("font-size", "0.85em")
-                    .set("margin-left", "1em");
+            Span badge = new Span("Inapproprié");
+            badge.getStyle()
+                    .set("background", "#ffebee")
+                    .set("color", "#b71c1c")
+                    .set("padding", "2px 10px")
+                    .set("border-radius", "10px")
+                    .set("font-size", "0.9em")
+                    .set("font-weight", "bold")
+                    .set("margin-left", "10px");
+            auteurDate.add(badge);
         }
 
-        // Contenu du commentaire
-        Span contenu = new Span(commentaire.getContenu() != null ? commentaire.getContenu() : "");
-        contenu.getStyle().set("display", "block");
+        Paragraph contenu = new Paragraph(commentaire.getContenu());
+        contenu.addClassName("post-detail-comment-content");
 
-        // Ajout dans la bulle
-        HorizontalLayout header = new HorizontalLayout(auteurDate);
-        if (inapproprieLabel != null) {
-            header.add(inapproprieLabel);
-        }
-        header.setAlignItems(FlexComponent.Alignment.CENTER);
+        Button repondreBtn = new Button("Répondre");
+        repondreBtn.addClassName("comment-action");
 
-        bubble.add(header, contenu);
-        return bubble;
-    }
+        HorizontalLayout btnLayout = new HorizontalLayout(repondreBtn);
+        btnLayout.setWidthFull();
+        btnLayout.setJustifyContentMode(JustifyContentMode.END);
+        btnLayout.setPadding(false);
+        btnLayout.setSpacing(false);
 
-    /**
-     * Affiche un message de succès et vide le champ commentaire.
-     */
-    @Override
-    public void afficherMessage(String message) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.showSuccessNotification(message);
-            commentTextArea.clear();
-            rafraichirListe();
-        }));
-    }
+        VerticalLayout reponseLayout = new VerticalLayout();
+        reponseLayout.setVisible(false);
+        reponseLayout.setPadding(false);
+        reponseLayout.setSpacing(false);
+        reponseLayout.setWidthFull();
 
-    /**
-     * Affiche un message d'erreur.
-     */
-    @Override
-    public void afficherErreur(String erreur) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.hideLoading(this);
-            VaadinUtils.showErrorNotification(erreur);
-        }));
-    }
+        TextField reponseField = new TextField();
+        reponseField.setPlaceholder("Votre réponse...");
+        reponseField.setWidthFull();
 
-    /**
-     * Rafraîchit la liste des commentaires après ajout.
-     */
-    @Override
-    public void rafraichirListe() {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            if (currentPost != null) {
-                postPresenter.chargerPost(currentPost.getId());
+        Button publierReponseBtn = new Button("Publier");
+        Button annulerBtn = new Button("Annuler");
+
+        HorizontalLayout reponseForm = new HorizontalLayout(reponseField, publierReponseBtn, annulerBtn);
+        reponseForm.setWidthFull();
+        reponseForm.setAlignItems(Alignment.END);
+        reponseForm.setFlexGrow(1, reponseField);
+
+        reponseLayout.add(reponseForm);
+
+        repondreBtn.addClickListener(e -> {
+            if (champReponseOuvert != null && champReponseOuvert != reponseLayout) {
+                champReponseOuvert.setVisible(false);
+                champReponseOuvert.getParent().ifPresent(parent -> {
+                    if (parent instanceof VerticalLayout parentLayout) {
+                        parentLayout.getChildren()
+                                .filter(c -> c instanceof HorizontalLayout)
+                                .findFirst()
+                                .ifPresent(b -> b.setVisible(true));
+                    }
+                });
             }
-        }));
+            btnLayout.setVisible(false);
+            reponseLayout.setVisible(true);
+            champReponseOuvert = reponseLayout;
+            reponseField.focus();
+        });
+
+        annulerBtn.addClickListener(e -> {
+            reponseLayout.setVisible(false);
+            btnLayout.setVisible(true);
+            reponseField.clear();
+            champReponseOuvert = null;
+        });
+
+        publierReponseBtn.addClickListener(e -> {
+            String contenuReponse = reponseField.getValue();
+            if (contenuReponse == null || contenuReponse.trim().isEmpty()) {
+                Notification.show("La réponse ne peut pas être vide.", 3000, Notification.Position.MIDDLE);
+                return;
+            }
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser)) {
+                Notification.show("Utilisateur non authentifié.", 3000, Notification.Position.MIDDLE);
+                return;
+            }
+
+            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+            Commentaire reponse = new Commentaire();
+            reponse.setContenu(contenuReponse.trim());
+            reponse.setPost(currentPost);
+            reponse.setParent(commentaire);
+            reponse.setAuteurEmail(oidcUser.getEmail());
+            String givenName = oidcUser.getGivenName();
+            String familyName = oidcUser.getFamilyName();
+            if (givenName != null && familyName != null) {
+                reponse.setAuteurNom(givenName + " " + familyName);
+            } else if (oidcUser.getFullName() != null) {
+                reponse.setAuteurNom(oidcUser.getFullName());
+            } else {
+                reponse.setAuteurNom(oidcUser.getEmail());
+            }
+
+            try {
+                commentaireService.save(reponse);
+                Notification.show("Réponse publiée !", 3000, Notification.Position.MIDDLE);
+                reponseField.clear();
+                reponseLayout.setVisible(false);
+                btnLayout.setVisible(true);
+                champReponseOuvert = null;
+                removeAll();
+                setParameter(null, currentPost.getId());
+            } catch (Exception ex) {
+                Notification.show("Erreur lors de la publication de la réponse : " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
+        });
+
+        bulle.add(auteurDate, contenu, btnLayout, reponseLayout);
+
+        tous.stream()
+                .filter(rep -> rep.getParent() != null && rep.getParent().getId().equals(commentaire.getId()))
+                .forEach(rep -> bulle.add(creerBulleCommentaire(rep, tous, niveau + 1)));
+
+        return bulle;
     }
 
-    /**
-     * Affiche une erreur et redirige vers la liste des articles.
-     */
-    private void showErrorAndRedirect(String errorMessage) {
-        VaadinUtils.showErrorNotification(errorMessage);
-        getUI().ifPresent(ui -> ui.navigate("articles"));
-    }
-
-// Méthodes non utilisées de PostView
-    @Override
-    public void afficherPosts(List<Post> posts) {
-    }
-
-    @Override
-    public void viderFormulaire() {
-    }
-
-    @Override
-    public void redirigerVersDetail(Long postId) {
-    }
 }

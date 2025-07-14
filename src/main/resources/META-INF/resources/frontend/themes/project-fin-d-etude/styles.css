@@ -31,7 +31,7 @@
     white-space: pre-line;
     word-break: break-word;
     max-width: 500px;
-} 
+}
 
 /* Dans votre fichier styles.css */
 vaadin-side-nav-item {
@@ -52,33 +52,64 @@ vaadin-side-nav-item:hover {
 }
 
 @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.8; }
-    100% { opacity: 1; }
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 1;
+    }
 }
 
 /* === Personnalisation cohérente du menu latéral admin (noir & blanc) === */
-vaadin-side-nav.admin-sidenav {
-    background: #111 !important;
-    color: #fff !important;
-    min-height: 100vh;
-    border: none;
-}
-vaadin-side-nav.admin-sidenav vaadin-side-nav-item {
+
+.admin-sidenav vaadin-side-nav-item {
     color: #fff !important;
     fill: #fff !important;
     --vaadin-side-nav-item-text-color: #fff;
     --vaadin-side-nav-item-icon-color: #fff;
-    background: #111 !important;
+    background: transparent !important;
+    border-radius: 8px;
+    margin: 2px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: background 0.18s, color 0.18s;
 }
-vaadin-side-nav.admin-sidenav vaadin-side-nav-item:hover {
-    background: #742feb !important;
+
+.admin-sidenav vaadin-side-nav-item:hover,
+.admin-sidenav vaadin-side-nav-item[highlighted] {
+    background: #b3b2c4 !important;
     color: #fff !important;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
 }
-vaadin-side-nav.admin-sidenav vaadin-icon,
-vaadin-side-nav.admin-sidenav [part="icon"] {
+
+.admin-layout {
+    background: linear-gradient(135deg, #b7b9be 0%, #687588 100%) !important;
+    color: #fff !important;
+    min-height: 100vh;
+    border: none;
+    border-radius: 20px 0 0 20px;
+    box-shadow: 2px 0 12px rgba(30, 41, 59, 0.10);
+    padding-top: 18px;
+}
+
+.admin-sidenav vaadin-side-nav-item[selected] {
+    background: #fff !important;
+    color: #6c63ff !important;
+    font-weight: bold;
+    border-left: 4px solid #6c63ff;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+}
+
+.admin-sidenav vaadin-icon,
+.admin-sidenav [part="icon"] {
     color: #fff !important;
     fill: #fff !important;
+    font-size: 1.2em;
 }
 
 /* Fond noir sur tout le drawer */
@@ -87,7 +118,7 @@ vaadin-side-nav.admin-sidenav [part="icon"] {
 }
 
 /* Fond noir sur le header, le menu et le bouton */
-[part="drawer"] > div,
+[part="drawer"]>div,
 [part="drawer"] vaadin-side-nav.admin-sidenav,
 [part="drawer"] .logout-btn {
     background: #111 !important;
@@ -96,15 +127,641 @@ vaadin-side-nav.admin-sidenav [part="icon"] {
 
 /* Bouton Déconnexion blanc sur fond noir, bien visible */
 .logout-btn {
-    background: #111 !important;
+    background: #2563eb !important;
     color: #fff !important;
-    border: 1px solid #fff !important;
-    box-shadow: none !important;
+    border: none !important;
+    /* en bas de la page */
+    position: fixed;
+    bottom: 5px;
+    font-size: 12px;
 }
+
 .logout-btn:hover {
-    background: #222 !important;
-    color: #fff !important;
-    border: 1px solid #fff !important;
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+}
+
+/* style des blocs d'article */
+
+/* Styles pour BlogPostCard */
+.blog-post-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
+    padding: 28px 24px 24px 24px;
+    margin: 16px;
+    width: 300px;
+    min-width: 220px;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+}
+
+.blog-post-card:hover {
+    box-shadow: 0 8px 24px rgba(44, 62, 80, 0.18);
+    transform: translateY(-2px);
+}
+
+.blog-post-card:not(:hover) {
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
+    transform: none;
+}
+
+.blog-post-date {
+    color: rgb(185 186 188);
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.blog-post-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: #181c32;
+    margin: 0 0 10px 0;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 98%;
+}
+
+.blog-post-description {
+    color: rgb(98 75 75);
+    font-size: 14px;
+    margin: 0 0 0 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    max-width: 98%;
+}
+
+.blog-post-button {
+    margin-left: auto;
+    background-color: #6c63ff;
+    color: white;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    padding-left: 28px;
+    padding-right: 28px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+}
+
+/* Styles pour ArticlesView */
+.articles-search-bar-container {
+    margin-top: 24px;
+    margin-bottom: 32px;
+    width: 100%;
+    align-items: center;
+}
+
+.articles-grid {
+    max-width: 100%;
+    margin: 0px auto 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+.articles-title {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    width: 100%;
+}
+
+.articles-card {
+    min-width: 260px;
+    max-width: 340px;
+}
+
+.articles-search-btn {
+    background-color: #6c63ff;
+    color: white;
+    border-radius: 10px;
+    font-size: 12px;
+}
+
+/* === Styles pour AboutView === */
+.about-view {
+    text-align: center;
+}
+
+.about-main-container {
+    margin: 0 auto;
+}
+
+.about-title {
+    width: 100%;
+    font-size: 18px;
+    text-align: center;
+}
+
+.about-section-content {
+    text-align: left;
+}
+
+/* === Styles pour ProfileView === */
+.profile-view {
+    padding-top: 80px;
+}
+
+.profile-user-info {
+    border: 2px solid rgb(122, 116, 243);
+    margin-bottom: 32px;
+}
+
+/* === Styles pour HomePageView === */
+.home-recent-posts-title {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: bold;
+    width: 100%;
+}
+
+.home-recent-posts-grid {
+    max-width: 100%;
+    margin: 32px auto 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+}
+
+/* === Styles pour PostDetailView === */
+
+/* Titre principal avec traits */
+.post-detail-title {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 0.15em !important;
+    margin-top: 0.15em !important;
+}
+
+/* Auteur et date de publication du post */
+.post-detail-meta-author {
+    text-align: center;
+    display: block;
+    color: #666;
+    font-size: 1rem;
+    margin-bottom: 0.1em !important;
+    margin-left: auto;
+    margin-right: auto;
+    width: max-content;
+}
+
+/* Contenu de l'article */
+.post-detail-body {
+    background: #f7f7fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e0e0e0;
+    padding: 0.5em 0.7em !important;
+    margin-bottom: 0.5em !important;
+    width: 50%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+/* Titre de la section commentaires */
+.post-detail-comments-title {
+    width: 55%;
+}
+
+/* === Styles pour commentaires parents et enfants (compact, moderne) === */
+
+/* Bulle parent */
+.post-detail-comment-bubble {
+    background: #f7f7fa;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(24, 119, 242, 0.04), 0 1px 2px rgba(0, 0, 0, 0.01);
+    padding: 4px 7px 4px 7px;
+    margin-bottom: 4px;
+    margin-left: 4px;
+    border: 1px solid #e6e6e6;
+    position: relative;
+    font-size: 0.91rem;
+    max-width: 600px;
+    word-break: break-word;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    border-left: 4px solid #1976d2;
+}
+
+/* Bulle enfant (réponse) */
+
+.post-detail-comment-author-date {
+    color: #8a8484;
+    font-size: 12px;
+    margin-bottom: 0.05em;
+    font-weight: 500;
+}
+
+.post-detail-comment-content {
+    color: #222;
+    font-size: 13.5px;
+    white-space: pre-line;
+}
+
+.comment-action {
+    background: #e4e3e7;
+    color: #cec8c8;
+    border: none;
+    border-radius: 6px;
+    padding: 1px 7px;
+    font-size: 9px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-weight: 500;
+    box-shadow: none;
+    display: inline-block;
+}
+
+.comment-action:hover {
+    background: #e0e7ef;
+}
+
+/* === Fin Commentaires & Réponses === */
+
+/*===style de la decription dans la page home===*/
+.max-w-md {
+    max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* Lien actif dans le header */
+.nav-link-active {
+    color: inherit !important;
+    border-bottom: 2px solid #6c63ff;
+    font-weight: bold;
+}
+
+/* Titre principal admin (gestion des articles, etc.) */
+.admin-section-title {
+    text-align: left;
+    font-size: 18px;
+    font-weight: 800;
+    color: #6154ed;
+    letter-spacing: 1px;
+    text-align: center;
+    margin: 32px 0 24px 0;
+    padding: 0 0 8px 0;
+    padding-left: 20px;
+    background: rgb(255, 255, 255);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
 }
 
 
+/* Indentation des réponses */
+.comment-reply {
+    margin-left: 50px;
+}
+
+/* Bouton Répondre */
+button[theme~="primary"] {
+    background: #1877f2;
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 4px 14px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    background: #d8dfea;
+    color: #1877f2;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.comment-text-container {
+    width: 100%;
+}
+
+.comment-author-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.comment-author {
+    font-weight: bold;
+    color: #050505;
+    font-size: 0.98em;
+}
+
+.comment-date {
+    color: #65676b;
+    font-size: 0.90em;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 2px;
+}
+
+.comment-action {
+    color: #65676b;
+    font-size: 0.92em;
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+}
+
+.comment-action:hover {
+    color: #1877f2;
+    text-decoration: underline;
+}
+
+/* Logo du header */
+.header-logo {
+    height: 60px;
+    margin-left: 16px;
+    margin-right: 8px;
+    vertical-align: middle;
+    object-fit: contain;
+    display: inline-block;
+}
+
+/* Icône utilisateur du header */
+.header-user-icon {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+/* Styles pour la vue AdminCommentairesView */
+.admin-commentaires-root {
+    background: var(--lumo-contrast-5pct, #f7f7f7);
+}
+
+.admin-commentaires-main-content {
+    margin: auto;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.07);
+}
+
+.admin-commentaires-title {
+    font-size: 2.2rem;
+    color: #000000;
+    text-align: center;
+}
+
+.admin-commentaires-content-section {
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.09);
+    width: 100%;
+    height: 600px;
+}
+
+.admin-commentaires-empty-message {
+    color: var(--lumo-secondary-text-color, #888);
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.admin-commentaires-grid {
+    width: 100%;
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.admin-commentaires-contenu {
+    white-space: pre-line;
+    word-break: break-word;
+    max-width: 280px;
+    display: flex;
+}
+
+/* Colonne Article plus étroite dans la grille admin commentaires */
+.admin-commentaires-grid td:nth-child(5),
+.admin-commentaires-grid th:nth-child(5) {
+    max-width: 80px;
+    width: 80px;
+    min-width: 60px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.admin-commentaires-article {
+    max-width: 90px;
+    width: 90px;
+    min-width: 60px;
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: 4px;
+    padding-right: 4px;
+    display: block;
+}
+
+.admin-posts-contenu,
+.admin-messages-contenu {
+    max-width: 280px;
+    width: 280px;
+    min-width: 80px;
+    white-space: pre-line;
+    word-break: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.admin-commentaires-btn {
+    font-size: 0.85rem;
+    min-width: 0;
+    height: 28px;
+    border-radius: 6px;
+}
+
+/* --- Amélioration de l'interface admin --- */
+
+/* Logo centré */
+.admin-layout img {
+    margin: 30px auto 20px auto;
+    display: block;
+}
+
+/* Table admin */
+table,
+.vaadin-grid,
+.v-table {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 16px rgba(30, 41, 59, 0.07);
+    margin-top: 30px;
+    font-family: 'Lato', 'Open Sans', Arial, sans-serif;
+}
+
+th {
+    background: #f1f5f9;
+    font-weight: bold;
+    font-size: 1.1em;
+    color: #2563eb;
+}
+
+tr:hover {
+    background: #e0f2fe;
+    transition: background 0.2s;
+}
+
+/* Boutons */
+.logout-btn,
+.v-button,
+.vaadin-button {
+    background: #2563eb !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(30, 41, 59, 0.08);
+    transition: background 0.2s;
+    border: none !important;
+}
+
+.logout-btn:hover,
+.v-button:hover,
+.vaadin-button:hover {
+    background: #1e293b !important;
+    color: #38bdf8 !important;
+}
+
+/* Titres */
+h1,
+.main-title,
+.admin-section-title {
+    font-family: 'Lato', 'Open Sans', Arial, sans-serif;
+    font-size: 2.5em;
+    font-weight: 800;
+    color: #2563eb;
+    margin-bottom: 20px;
+}
+
+.big-font-textarea textarea {
+    font-size: 1.5rem !important;
+    min-height: 45px;
+}
+
+
+
+/* Champ de saisie de réponse plus compact et intégré */
+.big-font-textarea textarea {
+    font-size: 13.5px !important;
+}
+
+/* Bouton Publier (principal et réponse) */
+.btn-publier {
+    background: #f0f2f5;
+    color: #1877f2;
+    font-weight: bold;
+    border-radius: 8px;
+    margin-left: 12px;
+    min-width: 120px;
+    min-height: 40px;
+}
+
+/* Bouton Publier personnalisé */
+.custom-publish-btn {
+    background: #1976d2;
+    color: #fff;
+    border-radius: 6px;
+    font-weight: 500;
+    box-shadow: none;
+    border: none;
+    transition: background 0.2s;
+}
+
+.custom-publish-btn:hover {
+    background: #1565c0;
+    color: #fff;
+}
+
+
+/* Limite l'indentation à 3 niveaux visuellement */
+.level-0 {
+    margin-left: 0 !important;
+}
+
+.level-1 {
+    margin-left: 0% !important;
+}
+
+.level-2 {
+    margin-left: 0px !important;
+}
+
+.level-3,
+.level-4,
+.level-5,
+.level-6,
+.level-7,
+.level-8,
+.level-9,
+.level-10 {
+    margin-left: 0px !important;
+}
+
+.post-detail-comment-bubble {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: break-word;
+}
+
+@media (max-width: 800px) {
+    .level-1 {
+        margin-left: 0px !important;
+    }
+
+    .level-2 {
+        margin-left: 0px !important;
+    }
+
+    .level-3,
+    .level-4,
+    .level-5,
+    .level-6,
+    .level-7,
+    .level-8,
+    .level-9,
+    .level-10 {
+        margin-left: 0px !important;
+    }
+}

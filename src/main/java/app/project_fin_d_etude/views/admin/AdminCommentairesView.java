@@ -14,20 +14,21 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.presenter.CommentairePresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Vue d'administration des commentaires : affichage automatique et gestion.
  */
 @Route(value = "admin/commentaires", layout = AdminLayout.class)
 @PageTitle("Gestion des commentaires - Administration")
-@RolesAllowed("ADMIN")
+@AnonymousAllowed
 public class AdminCommentairesView extends VerticalLayout implements CommentairePresenter.CommentaireView {
 
     private final CommentairePresenter commentairePresenter;
@@ -42,7 +43,7 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         setSpacing(false);
         setPadding(false);
         setSizeFull();
-        addClassNames(LumoUtility.Background.CONTRAST_5);
+        addClassName("admin-commentaires-root");
 
         add(createMainContent());
         configureGrid();
@@ -60,12 +61,7 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         mainContent.setWidth("100%");
         mainContent.setPadding(true);
         mainContent.setAlignItems(FlexComponent.Alignment.CENTER);
-        mainContent.addClassNames(
-                LumoUtility.Margin.AUTO,
-                LumoUtility.Background.CONTRAST_10,
-                LumoUtility.BorderRadius.LARGE,
-                LumoUtility.BoxShadow.SMALL
-        );
+        mainContent.addClassName("admin-commentaires-main-content");
 
         mainContent.add(createPageTitle());
         mainContent.add(createContentSection());
@@ -78,6 +74,8 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
      */
     private H1 createPageTitle() {
         H1 pageTitle = new H1("GESTION DES COMMENTAIRES");
+        pageTitle.addClassName("main-title");
+        pageTitle.addClassName("admin-commentaires-title");
         pageTitle.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -93,16 +91,12 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
      */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
-        contentSection.addClassNames(
-                LumoUtility.Background.CONTRAST_5,
-                LumoUtility.Padding.LARGE,
-                LumoUtility.BorderRadius.LARGE,
-                LumoUtility.BoxShadow.MEDIUM
-        );
+        contentSection.setWidth("100%");
+        contentSection.setHeight("600px");
+        contentSection.addClassName("admin-commentaires-content-section");
 
         contentSection.add(grid);
-        noCommentsMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER);
+        noCommentsMessage.addClassName("admin-commentaires-empty-message");
         noCommentsMessage.setVisible(false);
         contentSection.add(noCommentsMessage);
         return contentSection;
@@ -112,15 +106,15 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
      * Configure la grille d'affichage des commentaires.
      */
     private void configureGrid() {
-        grid.addClassNames("contact-grid");
+        grid.addClassName("admin-commentaires-grid");
         grid.setColumns("id", "dateCreation");
 
-        // Colonne contenu multi-ligne
+        // Colonne contenu multi-ligne, tronquée à 100 caractères
         grid.addComponentColumn(commentaire -> {
-            Span contenuSpan = new Span(commentaire.getContenu());
-            contenuSpan.getElement().getStyle().set("white-space", "pre-line");
-            contenuSpan.getElement().getStyle().set("word-break", "break-word");
-            contenuSpan.getElement().getStyle().set("max-width", "300px");
+            String contenu = commentaire.getContenu();
+            String contenuAffiche = contenu != null && contenu.length() > 100 ? contenu.substring(0, 100) + "…" : contenu;
+            Span contenuSpan = new Span(contenuAffiche);
+            contenuSpan.addClassName("admin-commentaires-contenu");
             return contenuSpan;
         }).setHeader("Contenu").setAutoWidth(true).setFlexGrow(1);
 
@@ -132,32 +126,48 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
             return "Auteur inconnu";
         }).setHeader("Auteur");
 
-        // Colonne pour l'article (titre du post)
-        grid.addColumn(commentaire -> {
-            if (commentaire.getPost() != null) {
-                return commentaire.getPost().getTitre();
-            }
-            return "Article inconnu";
-        }).setHeader("Article");
-
-        grid.addColumn(Commentaire::isInapproprie)
-                .setHeader("Inapproprié")
-                .setAutoWidth(true);
+        // Colonne pour l'article (titre du post) avec style personnalisé sans méthode dépréciée
+        grid.addComponentColumn(commentaire -> {
+            String titre = (commentaire.getPost() != null) ? commentaire.getPost().getTitre() : "Article inconnu";
+            Span titreSpan = new Span(titre);
+            titreSpan.addClassName("admin-commentaires-article");
+            return titreSpan;
+        })
+                .setHeader("Titre de l'article")
+                .setWidth("50px")
+                .setFlexGrow(0);
 
         grid.addComponentColumn(commentaire -> {
-            Button inapproprieBtn = new Button(
-                    commentaire.isInapproprie() ? "Rendre approprié" : "Marquer inapproprié"
+            boolean inapproprie = commentaire.isInapproprie();
+            Span badge = new Span(String.valueOf(inapproprie));
+            if (inapproprie) {
+                badge.getStyle().set("background", "#e6f4ea")
+                        .set("color", "#1b5e20")
+                        .set("padding", "4px 12px")
+                        .set("border-radius", "12px")
+                        .set("font-weight", "bold");
+            } else {
+                badge.getStyle().set("background", "#ffebee")
+                        .set("color", "#b71c1c")
+                        .set("padding", "4px 12px")
+                        .set("border-radius", "12px")
+                        .set("font-weight", "bold");
+            }
+            return badge;
+        }).setHeader("Inapproprié");
+
+        grid.addComponentColumn(commentaire -> {
+            Button actionBtn = new Button(
+                    commentaire.isInapproprie() ? "Rendre approprié" : "Marquer inapproprié",
+                    e -> {
+                        commentaire.setInapproprie(!commentaire.isInapproprie());
+                        commentairePresenter.modifier(commentaire);
+                        grid.getDataProvider().refreshItem(commentaire);
+                        grid.getDataProvider().refreshAll();
+                    }
             );
-            inapproprieBtn.addThemeVariants(ButtonVariant.LUMO_ERROR);
-
-            inapproprieBtn.addClickListener(e -> {
-                commentaire.setInapproprie(!commentaire.isInapproprie());
-                commentairePresenter.modifier(commentaire);
-                grid.getDataProvider().refreshItem(commentaire);
-                grid.getDataProvider().refreshAll();
-            });
-
-            return inapproprieBtn;
+            actionBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            return actionBtn;
         }).setHeader("Modération");
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));

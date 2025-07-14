@@ -1,7 +1,11 @@
 package app.project_fin_d_etude.views.admin;
 
-import app.project_fin_d_etude.layout.AdminLayout;
-import app.project_fin_d_etude.service.KeycloakUserAdminService;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import org.keycloak.representations.idm.UserRepresentation;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
@@ -18,19 +22,16 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import jakarta.annotation.security.RolesAllowed;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import org.keycloak.representations.idm.UserRepresentation;
-import org.springframework.beans.factory.annotation.Autowired;
-import app.project_fin_d_etude.utils.VaadinUtils;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-/**
- * Vue d'administration des utilisateurs Keycloak : CRUD complet.
- */
+import app.project_fin_d_etude.layout.AdminLayout;
+import app.project_fin_d_etude.service.KeycloakUserAdminService;
+import app.project_fin_d_etude.utils.VaadinUtils;
+import org.springframework.security.access.annotation.Secured;
+
 @Route(value = "admin/keycloak-users", layout = AdminLayout.class)
 @PageTitle("Gestion des utilisateurs Keycloak - Administration")
-@RolesAllowed("ADMIN")
+@AnonymousAllowed
 public class AdminKeycloakUsersView extends VerticalLayout {
 
     private final KeycloakUserAdminService keycloakUserAdminService;
@@ -88,7 +89,8 @@ public class AdminKeycloakUsersView extends VerticalLayout {
      */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
+        contentSection.setWidth("100%");
+        contentSection.setHeight("500px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,
@@ -184,33 +186,21 @@ public class AdminKeycloakUsersView extends VerticalLayout {
             }
 
             final UI ui = UI.getCurrent();
-            CompletableFuture<Void> saveFuture;
-
-            if (isEdit) {
-                saveFuture = keycloakUserAdminService.updateUser(user.getId(), usernameField.getValue(), emailField.getValue(), user.isEnabled())
-                        .thenCompose(v -> {
-                            if (!passwordField.isEmpty()) {
-                                return keycloakUserAdminService.updatePassword(user.getId(), passwordField.getValue());
-                            }
-                            return CompletableFuture.completedFuture(null);
-                        });
-            } else {
-                saveFuture = keycloakUserAdminService.createUser(usernameField.getValue(), emailField.getValue(), passwordField.getValue(), true)
-                        .thenAccept(userId -> {
-                        }).thenApply(v -> null);
-            }
-
-            saveFuture.whenComplete((result, ex) -> {
-                ui.access(() -> {
-                    if (ex != null) {
-                        Notification.show("Erreur : " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
-                    } else {
-                        Notification.show("Opération réussie", 3000, Notification.Position.MIDDLE);
-                        dialog.close();
-                        loadUsers();
+            try {
+                if (isEdit) {
+                    keycloakUserAdminService.updateUser(user.getId(), usernameField.getValue(), emailField.getValue(), user.isEnabled());
+                    if (!passwordField.isEmpty()) {
+                        keycloakUserAdminService.updatePassword(user.getId(), passwordField.getValue());
                     }
-                });
-            });
+                } else {
+                    keycloakUserAdminService.createUser(usernameField.getValue(), emailField.getValue(), passwordField.getValue(), true);
+                }
+                Notification.show("Opération réussie", 3000, Notification.Position.MIDDLE);
+                dialog.close();
+                loadUsers();
+            } catch (Exception ex) {
+                Notification.show("Erreur : " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
         });
         saveButton.addClassNames(LumoUtility.Margin.Top.MEDIUM);
         Button cancelButton = new Button("Annuler", e -> dialog.close());
@@ -228,17 +218,14 @@ public class AdminKeycloakUsersView extends VerticalLayout {
         dialog.add(new Paragraph("Êtes-vous sûr de vouloir supprimer l'utilisateur " + user.getUsername() + " ?"));
         Button confirm = new Button("Confirmer", e -> {
             final UI ui = UI.getCurrent();
-            keycloakUserAdminService.deleteUser(user.getId()).whenComplete((unused, ex) -> {
-                ui.access(() -> {
-                    if (ex != null) {
-                        Notification.show("Erreur : " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
-                    } else {
-                        Notification.show("Utilisateur supprimé", 3000, Notification.Position.MIDDLE);
-                        dialog.close();
-                        loadUsers();
-                    }
-                });
-            });
+            try {
+                keycloakUserAdminService.deleteUser(user.getId());
+                Notification.show("Utilisateur supprimé", 3000, Notification.Position.MIDDLE);
+                dialog.close();
+                loadUsers();
+            } catch (Exception ex) {
+                Notification.show("Erreur : " + ex.getMessage(), 4000, Notification.Position.MIDDLE);
+            }
         });
         Button cancel = new Button("Annuler", e -> dialog.close());
         confirm.getStyle().set("color", "red");

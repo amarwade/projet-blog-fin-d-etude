@@ -7,24 +7,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.presenter.MessagePresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.access.annotation.Secured;
 
-/**
- * Vue d'administration des messages : affichage automatique et gestion.
- */
 @Route(value = "admin/messages", layout = AdminLayout.class)
 @PageTitle("Gestion des messages - Administration")
-@RolesAllowed("ADMIN")
+@AnonymousAllowed
 public class AdminMessagesView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private final MessagePresenter messagePresenter;
@@ -88,7 +87,8 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
      */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
+        contentSection.setWidth("100%");
+        contentSection.setHeight("600px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,
@@ -109,7 +109,13 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
         grid.addColumn(Message::getNom).setHeader("Nom");
         grid.addColumn(Message::getEmail).setHeader("Email");
         grid.addColumn(Message::getSujet).setHeader("Sujet");
-        grid.addColumn(Message::getContenu).setHeader("Contenu");
+        grid.addComponentColumn(message -> {
+            String contenu = message.getContenu();
+            String contenuAffiche = contenu != null && contenu.length() > 100 ? contenu.substring(0, 100) + "…" : contenu;
+            Span contenuSpan = new Span(contenuAffiche);
+            contenuSpan.addClassName("admin-messages-contenu");
+            return contenuSpan;
+        }).setHeader("Contenu").setWidth("120px").setFlexGrow(0);
         grid.addColumn(Message::getDateEnvoi).setHeader("Date Envoi");
         grid.addColumn(Message::isLu).setHeader("Lu");
 

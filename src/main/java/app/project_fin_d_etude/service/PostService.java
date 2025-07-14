@@ -3,6 +3,8 @@ package app.project_fin_d_etude.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,6 +13,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.repository.PostRepository;
@@ -18,6 +21,8 @@ import app.project_fin_d_etude.utils.EntityValidator;
 
 @Service
 public class PostService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PostService.class);
 
     private final PostRepository postRepository;
 
@@ -30,7 +35,16 @@ public class PostService {
      * Récupère tous les posts triés par date de publication décroissante.
      */
     public List<Post> getAllPosts() {
-        return postRepository.findAllByOrderByDatePublicationDesc();
+        logger.info("Début de getAllPosts dans PostService");
+        try {
+            logger.info("Appel de postRepository.findAllByOrderByDatePublicationDesc()");
+            List<Post> posts = postRepository.findAllByOrderByDatePublicationDesc();
+            logger.info("Posts récupérés depuis le repository: {} articles", posts != null ? posts.size() : 0);
+            return posts;
+        } catch (Exception e) {
+            logger.error("Erreur dans getAllPosts: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
@@ -96,12 +110,36 @@ public class PostService {
     }
 
     /**
-     * Supprime un post par son identifiant.
+     * Supprime un post par son identifiant. Seuls l'auteur du post ou un
+     * administrateur peuvent supprimer un post.
      */
     public void delete(Long id) {
         if (id == null) {
             throw new IllegalArgumentException("L'ID du post ne peut pas être null");
         }
+
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Post non trouvé avec l'ID: " + id));
+
+        // Vérification des droits de suppression
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof OidcUser oidcUser) {
+            String userEmail = oidcUser.getEmail();
+            boolean isAuthor = userEmail != null && userEmail.equals(post.getAuteurEmail());
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+
+            if (!isAuthor && !isAdmin) {
+                logger.warn("Tentative de suppression non autorisée du post {} par l'utilisateur {}", id, userEmail);
+                throw new SecurityException("Vous n'avez pas les droits pour supprimer ce post");
+            }
+        } else {
+            logger.warn("Tentative de suppression du post {} par un utilisateur non authentifié", id);
+            throw new SecurityException("Authentification requise pour supprimer un post");
+        }
+
+        logger.info("Suppression du post {} par l'utilisateur {}", id,
+                authentication.getPrincipal() instanceof OidcUser user ? user.getEmail() : "unknown");
         postRepository.deleteById(id);
     }
 
@@ -109,10 +147,16 @@ public class PostService {
      * Recherche des posts par mot-clé sans pagination.
      */
     public List<Post> searchAllPosts(String keyword) {
+        logger.info("[DIAG] Entrée dans PostService.searchAllPosts avec keyword='{}'", keyword);
         if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllPosts();
+            logger.info("[DIAG] Keyword vide, appel de getAllPosts()");
+            List<Post> all = getAllPosts();
+            logger.info("[DIAG] getAllPosts() retourne {} articles", all != null ? all.size() : 0);
+            return all;
         }
-        return postRepository.searchAllPosts(keyword.trim());
+        List<Post> result = postRepository.searchAllPosts(keyword.trim());
+        logger.info("[DIAG] Résultat de searchAllPosts (repository) : {} articles", result != null ? result.size() : 0);
+        return result;
     }
 
     /**
@@ -145,5 +189,42 @@ public class PostService {
         if (size <= 0) {
             throw new IllegalArgumentException("La taille de page doit être positive");
         }
+    }
+
+    /**
+     * Récupère un post par son identifiant et force le chargement des
+     * commentaires.
+     */
+    @Transactional
+    public Optional<Post> getPostWithCommentaires(Long id) {
+        Optional<Post> postOpt = postRepository.findById(id);
+        postOpt.ifPresent(post -> {
+            if (post.getCommentaires() != null) {
+                post.getCommentaires().size(); // Force le chargement
+            }
+        });
+        return postOpt;
+    }
+
+    /**
+     * Met à jour l'email de l'auteur pour tous ses articles.
+     */
+    public int migrerEmailAuteur(String ancienEmail, String nouvelEmail) {
+        if (ancienEmail == null || nouvelEmail == null || ancienEmail.equals(nouvelEmail)) {
+            return 0;
+        }
+        logger.info("Migration des articles de {} vers {}", ancienEmail, nouvelEmail);
+        return postRepository.updateAuteurEmail(ancienEmail, nouvelEmail);
+    }
+
+    /**
+     * Met à jour le nom de l'auteur pour tous ses articles.
+     */
+    public int migrerNomAuteur(String email, String nouveauNom) {
+        if (email == null || nouveauNom == null || email.isBlank() || nouveauNom.isBlank()) {
+            return 0;
+        }
+        logger.info("Migration du nom d'auteur des articles pour {} vers {}", email, nouveauNom);
+        return postRepository.updateAuteurNom(email, nouveauNom);
     }
 }

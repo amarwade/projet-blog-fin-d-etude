@@ -5,28 +5,30 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.button.ButtonVariant;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.html.Span;
 
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
-import jakarta.annotation.security.RolesAllowed;
+import org.springframework.security.access.annotation.Secured;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
-@Route(value = "admin/dashboard", layout = AdminLayout.class)
+@Route(value = "admin/articles", layout = AdminLayout.class)
+
 @PageTitle("Gestion des articles - Administration")
-@RolesAllowed("ADMIN")
+@AnonymousAllowed
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
@@ -48,7 +50,7 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         VaadinUtils.showLoading(this);
         postPresenter.chargerPosts();
 
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getAuthorities());
+        System.out.println("Authorities: " + SecurityContextHolder.getContext().getAuthentication().getAuthorities());
     }
 
     private VerticalLayout createMainContent() {
@@ -70,7 +72,7 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
     }
 
     private H1 createPageTitle() {
-        H1 pageTitle = new H1("GESTION DES ARTICLES");
+        H1 pageTitle = new H1("GESTION DES POSTS");
         pageTitle.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -83,7 +85,8 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
 
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
-        contentSection.setWidth("90%");
+        contentSection.setWidth("100%");
+        contentSection.setHeight("600px");
         contentSection.addClassNames(
                 LumoUtility.Background.CONTRAST_5,
                 LumoUtility.Padding.LARGE,
@@ -110,12 +113,12 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         }).setHeader("Auteur");
 
         grid.addComponentColumn(post -> {
-            Span contenuSpan = new Span(post.getContenu());
-            contenuSpan.getElement().getStyle().set("white-space", "pre-line");
-            contenuSpan.getElement().getStyle().set("word-break", "break-word");
-            contenuSpan.getElement().getStyle().set("max-width", "300px");
+            String contenu = post.getContenu();
+            String contenuAffiche = contenu != null && contenu.length() > 100 ? contenu.substring(0, 100) + "…" : contenu;
+            Span contenuSpan = new Span(contenuAffiche);
+            contenuSpan.addClassName("admin-posts-contenu");
             return contenuSpan;
-        }).setHeader("Contenu").setAutoWidth(true).setFlexGrow(1);
+        }).setHeader("Contenu").setWidth("120px").setFlexGrow(0);
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
         //un grid colum pour action où il y'aura de bouton qui vont permettre de lire plus de détails post

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 
 /**
  * Configuration de l'exécution asynchrone dans l'application. Cette classe
@@ -46,6 +47,6 @@ public class AsyncConfig {
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         logger.info("Initialisation du ThreadPoolTaskExecutor : core={}, max={}, queue={}, prefix={}", corePoolSize, maxPoolSize, queueCapacity, threadNamePrefix);
-        return executor;
+        return new DelegatingSecurityContextExecutorService(executor.getThreadPoolExecutor());
     }
 }
