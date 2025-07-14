@@ -31,7 +31,7 @@ import jakarta.annotation.security.RolesAllowed;
  */
 @Route(value = "user/create-post", layout = MainLayout.class)
 @PageTitle("Créer un post")
-@RolesAllowed("USER")
+@RolesAllowed("OIDC_USER")
 public class CreatePostView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;

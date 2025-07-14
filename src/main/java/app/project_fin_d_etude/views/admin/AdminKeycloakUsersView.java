@@ -22,6 +22,7 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.service.KeycloakUserAdminService;
@@ -30,7 +31,7 @@ import org.springframework.security.access.annotation.Secured;
 
 @Route(value = "admin/keycloak-users", layout = AdminLayout.class)
 @PageTitle("Gestion des utilisateurs Keycloak - Administration")
-@Secured("OIDC_ADMIN")
+@AnonymousAllowed
 public class AdminKeycloakUsersView extends VerticalLayout {
 
     private final KeycloakUserAdminService keycloakUserAdminService;

@@ -42,7 +42,7 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "user/article", layout = MainLayout.class)
 @PageTitle("Détail de l'article")
-@RolesAllowed("USER")
+@RolesAllowed("OIDC_USER")
 public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private final PostService postService;

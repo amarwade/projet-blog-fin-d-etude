@@ -16,10 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import org.springframework.security.access.annotation.Secured;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 @Route(value = "admin/dashboard", layout = AdminLayout.class)
 @PageTitle("Tableau de bord administrateur")
-@Secured("OIDC_ADMIN")
+@AnonymousAllowed
 public class DashboardAdminView extends VerticalLayout {
 
     @Autowired

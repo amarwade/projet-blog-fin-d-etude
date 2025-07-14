@@ -12,6 +12,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.AdminLayout;
@@ -22,9 +23,7 @@ import org.springframework.security.access.annotation.Secured;
 
 @Route(value = "admin/messages", layout = AdminLayout.class)
 @PageTitle("Gestion des messages - Administration")
-@Secured("OIDC_ADMIN")
-
-
+@AnonymousAllowed
 public class AdminMessagesView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private final MessagePresenter messagePresenter;

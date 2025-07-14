@@ -23,10 +23,12 @@ import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import org.springframework.security.access.annotation.Secured;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
+
 @Route(value = "admin/articles", layout = AdminLayout.class)
 
 @PageTitle("Gestion des articles - Administration")
-@Secured("OIDC_ADMIN")
+@AnonymousAllowed
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;

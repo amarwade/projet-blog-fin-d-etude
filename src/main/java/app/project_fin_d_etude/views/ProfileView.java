@@ -7,6 +7,7 @@ import java.util.concurrent.Executor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,6 +48,7 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "profile", layout = MainLayout.class)
 @PageTitle("Mon Profil - Blog d'entreprise")
+@Secured("OIDC_USER")
 public class ProfileView extends VerticalLayout implements UserProfilePresenter.UserProfileView {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileView.class);

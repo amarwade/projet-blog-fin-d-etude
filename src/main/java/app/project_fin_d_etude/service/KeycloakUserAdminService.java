@@ -96,7 +96,7 @@ public class KeycloakUserAdminService {
      * Ajoute un utilisateur Keycloak (avec mot de passe), de façon synchrone.
      */
     public String createUser(String username, String email, String password, boolean enabled) {
-        checkAdminRights();
+        // checkAdminRights(); // Suppression de la vérification des droits utilisateur connecté
 
         if (username == null || username.trim().isEmpty()) {
             throw new IllegalArgumentException("Le nom d'utilisateur ne peut pas être vide");
@@ -180,7 +180,7 @@ public class KeycloakUserAdminService {
      * Supprime un utilisateur Keycloak, de façon synchrone.
      */
     public void deleteUser(String userId) {
-        checkAdminRights();
+        // checkAdminRights(); // Suppression de la vérification des droits utilisateur connecté
 
         try {
             realmResource().users().get(userId).remove();
