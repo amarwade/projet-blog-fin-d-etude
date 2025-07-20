@@ -28,6 +28,7 @@ import com.vaadin.flow.router.HasUrlParameter;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Commentaire;
@@ -42,7 +43,7 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "user/article", layout = MainLayout.class)
 @PageTitle("Détail de l'article")
-@RolesAllowed("OIDC_USER")
+@AnonymousAllowed
 public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long> {
 
     private final PostService postService;

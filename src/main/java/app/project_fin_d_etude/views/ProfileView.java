@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -48,7 +49,7 @@ import app.project_fin_d_etude.utils.VaadinUtils;
  */
 @Route(value = "profile", layout = MainLayout.class)
 @PageTitle("Mon Profil - Blog d'entreprise")
-@Secured("OIDC_USER")
+@AnonymousAllowed
 public class ProfileView extends VerticalLayout implements UserProfilePresenter.UserProfileView {
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileView.class);

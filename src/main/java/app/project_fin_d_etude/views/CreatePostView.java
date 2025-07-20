@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import com.vaadin.flow.server.auth.AnonymousAllowed;
 
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
@@ -31,7 +32,7 @@ import jakarta.annotation.security.RolesAllowed;
  */
 @Route(value = "user/create-post", layout = MainLayout.class)
 @PageTitle("Créer un post")
-@RolesAllowed("OIDC_USER")
+@AnonymousAllowed
 public class CreatePostView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
@@ -216,7 +217,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
     public void redirigerVersDetail(Long postId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
-        if (!isAuthenticated) {
+        if (isAuthenticated) {
             getUI().ifPresent(ui -> ui.access(() -> {
                 ui.navigate("user/article/" + postId);
             }));
